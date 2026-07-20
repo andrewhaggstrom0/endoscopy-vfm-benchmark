@@ -1,0 +1,19 @@
+# Week 1 smoke config. Small model on purpose -- proves the pipeline before
+# spending A40-hours on ViT-L.
+encoder:
+  _target_: src.encoders.dinov2.build
+  name: dinov2_vits14
+  image_size: 224
+  pool: cls
+  dtype: fp32
+  l2_normalize: false
+
+data:
+  dataset: cholecseg8k
+  root: ${oc.env:BIGDIR}/endoscopy/raw/cholecseg8k
+  fps_subsample: 1
+
+extract:
+  batch_size: 64
+  num_workers: 8
+  out_dir: ${oc.env:BIGDIR}/endoscopy/cache
