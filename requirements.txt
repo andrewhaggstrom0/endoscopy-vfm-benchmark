@@ -1,0 +1,13 @@
+torch
+torchvision
+timm
+transformers
+hydra-core
+scikit-learn
+opencv-python-headless
+numpy
+pandas
+matplotlib
+tqdm
+wandb
+pytest
