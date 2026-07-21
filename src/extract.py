@@ -19,6 +19,15 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
+# Fail fast if the shared py3.11 user-site dir is shadowing this env.
+# See LEDGER.md 2026-07-19: it silently supplies an old transformers.
+import site as _site
+if _site.ENABLE_USER_SITE:
+    raise RuntimeError(
+        "user site-packages is enabled; ~/.local/lib/python3.11 may shadow "
+        "this env. Set PYTHONNOUSERSITE=1 before running."
+    )
+
 from src.cache.store import EmbeddingStore
 from src.data import cholecseg8k
 from src.encoders.dinov2 import build as build_dinov2
@@ -65,8 +74,13 @@ def main() -> int:
 
     loader = LOADERS[dataset]
     groups = loader.discover(cfg.data.root)
+    # Contiguity is the precondition for every temporal metric downstream.
+    # Fail here rather than silently producing drift across scene cuts.
+    loader.assert_contiguous(groups)
     vids = list(groups)[: args.limit_videos]
-    print(f"videos       {len(vids)} of {len(groups)}\n")
+    n_videos = len({loader.parent_video(c) for c in groups})
+    print(f"clips        {len(vids)} of {len(groups)} "
+          f"({n_videos} videos)\n")
 
     bs = int(cfg.extract.batch_size)
     total_frames = 0
@@ -90,7 +104,8 @@ def main() -> int:
             video_id=vid, embeddings=emb,
             frame_ids=[p.stem for p in paths],
             fingerprint=fingerprint,
-            extra={"extract_seconds": round(dt, 2),
+            extra={"parent_video": loader.parent_video(vid),
+                   "extract_seconds": round(dt, 2),
                    "fps": round(len(paths) / dt, 1),
                    "peak_vram_mb": round(torch.cuda.max_memory_allocated() / 1e6, 1)
                                    if args.device == "cuda" else None},
