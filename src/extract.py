@@ -29,11 +29,11 @@ if _site.ENABLE_USER_SITE:
     )
 
 from src.cache.store import EmbeddingStore
-from src.data import cholecseg8k
+from src.data import cholecseg8k, cholec80_frames
 from src.encoders.dinov2 import build as build_dinov2
 
 BUILDERS = {"src.encoders.dinov2.build": build_dinov2}
-LOADERS = {"cholecseg8k": cholecseg8k}
+LOADERS = {"cholecseg8k": cholecseg8k, "cholec80": cholec80_frames}
 
 
 def main() -> int:
