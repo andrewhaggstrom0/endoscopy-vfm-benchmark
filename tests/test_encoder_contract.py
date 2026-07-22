@@ -99,3 +99,38 @@ def test_identical_frames_give_zero_drift(enc):
     e = enc.encode(enc.preprocess(f))
     d = 1 - torch.nn.functional.cosine_similarity(e[:-1], e[1:], dim=-1)
     assert d.abs().max() < 1e-5, d
+
+
+# --- CLIP: same contract, different backbone -------------------------------
+
+@pytest.fixture(scope="module")
+def clip_enc():
+    from src.encoders.clip import CLIPEncoder
+    cfg = EncoderConfig(name="clip_vitb16", weights="clip_vitb16",
+                        image_size=224, pool="cls")
+    return CLIPEncoder(cfg, device=DEVICE)
+
+
+def test_clip_satisfies_protocol(clip_enc):
+    assert isinstance(clip_enc, Encoder)
+
+
+def test_clip_deterministic(clip_enc):
+    x = clip_enc.preprocess(_frames())
+    assert torch.equal(clip_enc.encode(x), clip_enc.encode(x))
+
+
+def test_clip_zero_drift_on_static_clip(clip_enc):
+    f = np.repeat(_frames(n=1), 8, axis=0)
+    e = clip_enc.encode(clip_enc.preprocess(f))
+    d = 1 - torch.nn.functional.cosine_similarity(e[:-1], e[1:], dim=-1)
+    assert d.abs().max() < 1e-5, d
+
+
+def test_clip_uses_own_norm_not_imagenet(clip_enc):
+    """Regression guard: CLIP must not silently inherit ImageNet stats."""
+    from src.encoders.clip import CLIP_MEAN
+    from src.encoders.dinov2 import IMAGENET_MEAN
+    assert CLIP_MEAN != IMAGENET_MEAN
+    assert torch.allclose(clip_enc._mean.flatten(),
+                          torch.tensor(CLIP_MEAN), atol=1e-6)
