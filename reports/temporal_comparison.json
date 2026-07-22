@@ -16,21 +16,32 @@
       "jitter_ratio": 110.52291666666667,
       "conditional_score": 0.33583653373708855,
       "mean_run_len": 4.020971670014581
+    },
+    {
+      "encoder": "endovit_vitb16",
+      "frame_acc": 0.7191525946128517,
+      "drift_mean": 0.000900144183106022,
+      "jitter_ratio": 79.71770833333333,
+      "conditional_score": 0.47548015561610973,
+      "mean_run_len": 5.864138103383976
     }
   ],
   "ranked_by_accuracy": [
+    "endovit_vitb16",
     "dinov2_vits14",
     "clip_vitb16"
   ],
   "ranked_by_stability": [
+    "endovit_vitb16",
     "dinov2_vits14",
     "clip_vitb16"
   ],
   "ranked_by_jitter": [
+    "endovit_vitb16",
     "dinov2_vits14",
     "clip_vitb16"
   ],
   "rank_inversion": false,
-  "spearman_rho": null,
-  "spearman_p": null
+  "spearman_rho": 1.0,
+  "spearman_p": 0.0
 }
