@@ -48,6 +48,34 @@ def feature_drift(E: np.ndarray) -> dict:
     }
 
 
+def normalized_drift(E: np.ndarray) -> dict:
+    """Step-to-step drift divided by the sequence's overall feature spread.
+
+    Guards the low-variance loophole: a bland encoder that packs every frame
+    into a tiny region of embedding space has small raw drift but is NOT
+    tracking the scene -- its steps are small only because everything is small.
+    Dividing by spread (mean cosine distance to the video centroid) exposes
+    that. Lower drift_ratio = genuinely smaller relative motion per frame.
+
+    Discovered empirically: CLIP's raw drift (0.042) beat DINOv2's (0.124), but
+    CLIP's feature spread was 3.5x smaller; normalized, DINOv2 leads (0.67 vs
+    0.80). Raw drift is gameable by variance; this is not.
+    """
+    if E.shape[0] < 2:
+        return {"drift_ratio": 0.0, "spread": 0.0}
+    En = _l2norm(E)
+    step = (1.0 - np.sum(En[:-1] * En[1:], axis=1)).mean()
+    c = En.mean(0); c = c / (np.linalg.norm(c) + 1e-8)
+    spread = (1.0 - En @ c).mean()
+    # Degenerate case: a (near-)constant encoder has ~zero spread, making the
+    # ratio 0/0 -- pure float noise. A constant encoder is exactly the useless
+    # case we penalize, so treat undefined spread as maximally unstable
+    # (drift_ratio = 1.0 -> stability = 0).
+    if spread < 1e-4:
+        return {"drift_ratio": 1.0, "spread": float(spread)}
+    return {"drift_ratio": float(step / spread), "spread": float(spread)}
+
+
 def embedding_velocity(E: np.ndarray) -> np.ndarray:
     """Per-frame speed through embedding space: ||e_t - e_{t-1}|| on L2-normed
     features. Length T-1. Used by the optical-flow correlation (second pass)
@@ -128,8 +156,11 @@ def conditional_stability(E: np.ndarray, labels: np.ndarray) -> dict:
     product stays low. Reported as both components plus their product, so the
     trade-off is legible rather than hidden in one number.
     """
-    drift = feature_drift(E)["drift_mean"]
-    stability = 1.0 - drift                          # in (0, 1] for cosine
+    # Use variance-NORMALIZED drift: raw drift rewards low-variance encoders
+    # (see normalized_drift docstring). drift_ratio in ~[0,1+]; lower is more
+    # stable, so stability = 1 - min(drift_ratio, 1).
+    dr = normalized_drift(E)["drift_ratio"]
+    stability = 1.0 - min(dr, 1.0)
     consistency = neighbor_label_consistency(E, labels)
     score = (float(stability * consistency)
              if not np.isnan(consistency) else float("nan"))

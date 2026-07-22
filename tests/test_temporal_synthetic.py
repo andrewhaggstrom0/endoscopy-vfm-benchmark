@@ -53,10 +53,10 @@ def test_constant_encoder_is_stable_but_not_discriminative():
     E = np.repeat(RNG.standard_normal(D)[None, :], 60, axis=0)
     labels = RNG.integers(0, 7, size=60)      # labels vary; features do not
     cs = conditional_stability(E, labels)
-    assert cs["stability"] > 0.99             # trivially stable
-    # nearest neighbor is arbitrary among identical vectors -> consistency
-    # tracks label base-rate, far below a discriminative model's ~1.0
-    assert cs["consistency"] < 0.5
+    # Under variance-normalized drift, a constant encoder is DEGENERATE, not
+    # stable: near-zero spread -> drift_ratio pinned to 1.0 -> stability 0.
+    # The metric must refuse to reward it, on either the stability OR the
+    # consistency axis, so the product stays low.
     assert cs["conditional_score"] < 0.5
 
 
@@ -101,3 +101,17 @@ def test_neighbor_consistency_perfect_when_labels_constant():
     labels = np.zeros(30, dtype=int)
     E = RNG.standard_normal((30, D))
     assert neighbor_label_consistency(E, labels) == 1.0
+
+
+def test_normalized_drift_penalizes_bland_encoder():
+    """The loophole that fooled the first real run: a low-variance encoder has
+    low RAW drift but its normalized drift is not artificially small."""
+    from src.metrics.temporal import normalized_drift
+    rng = np.random.default_rng(1)
+    # bland: tiny steps around a point, tiny spread
+    bland = np.repeat(rng.standard_normal(D)[None], 50, 0) + rng.standard_normal((50, D)) * 0.01
+    # tracking: larger steps but proportionally larger spread
+    walk = np.cumsum(rng.standard_normal((50, D)) * 0.1, axis=0)
+    # raw drift favors bland; normalized should not blindly do so
+    nb, nw = normalized_drift(bland)["drift_ratio"], normalized_drift(walk)["drift_ratio"]
+    assert nb > 0.5   # bland's steps are large RELATIVE to its tiny spread

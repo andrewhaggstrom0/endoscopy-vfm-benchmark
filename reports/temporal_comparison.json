@@ -1,0 +1,36 @@
+{
+  "protocol": "train40_val8_test32",
+  "aggregates": [
+    {
+      "encoder": "clip_vitb16",
+      "frame_acc": 0.6612346066241057,
+      "drift_mean": 0.04233024170389399,
+      "jitter_ratio": 124.3375,
+      "conditional_score": 0.198817717916459,
+      "mean_run_len": 3.482966994906258
+    },
+    {
+      "encoder": "dinov2_vits14",
+      "frame_acc": 0.6888119971275667,
+      "drift_mean": 0.12438611965626478,
+      "jitter_ratio": 110.52291666666667,
+      "conditional_score": 0.33583653373708855,
+      "mean_run_len": 4.020971670014581
+    }
+  ],
+  "ranked_by_accuracy": [
+    "dinov2_vits14",
+    "clip_vitb16"
+  ],
+  "ranked_by_stability": [
+    "dinov2_vits14",
+    "clip_vitb16"
+  ],
+  "ranked_by_jitter": [
+    "dinov2_vits14",
+    "clip_vitb16"
+  ],
+  "rank_inversion": false,
+  "spearman_rho": null,
+  "spearman_p": null
+}
