@@ -1,0 +1,17 @@
+{
+  "video": "video75",
+  "n_frames": 1923,
+  "gt_transitions": 5,
+  "encoders": {
+    "dinov2_vits14": {
+      "acc": 0.7243889755590224,
+      "pred_transitions": 461,
+      "ratio_vs_gt": 92.2
+    },
+    "clip_vitb16": {
+      "acc": 0.6006240249609984,
+      "pred_transitions": 550,
+      "ratio_vs_gt": 110.0
+    }
+  }
+}
