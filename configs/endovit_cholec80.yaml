@@ -1,0 +1,18 @@
+# EndoViT ViT-B/16 over Cholec80 1fps frames. Surgical-domain encoder.
+# NOTE: Endo700k pretraining includes Cholec80 -- disclose the domain overlap.
+encoder:
+  _target_: src.encoders.endovit.build
+  name: endovit_vitb16
+  image_size: 224
+  pool: cls
+  dtype: fp32
+  l2_normalize: false
+
+data:
+  dataset: cholec80
+  root: ${oc.env:BIGDIR}/endoscopy/raw/cholec80_frames
+
+extract:
+  batch_size: 64
+  num_workers: 8
+  out_dir: ${oc.env:BIGDIR}/endoscopy/cache

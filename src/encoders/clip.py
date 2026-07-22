@@ -82,6 +82,6 @@ class CLIPEncoder(BaseEncoder):
                 "patches": out.last_hidden_state[:, 1:]}
 
 
-def build(name: str = "clip_vitb16", **kwargs) -> CLIPEncoder:
+def build(name: str = "clip_vitb16", device: str = "cuda", **kwargs) -> CLIPEncoder:
     cfg = EncoderConfig(name=name, weights=name, **kwargs)
-    return CLIPEncoder(cfg)
+    return CLIPEncoder(cfg, device=device)

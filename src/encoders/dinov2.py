@@ -82,7 +82,7 @@ class DINOv2Encoder(BaseEncoder):
         return {"cls": h[:, 0], "patches": h[:, 1:]}
 
 
-def build(name: str = "dinov2_vitl14", **kwargs) -> DINOv2Encoder:
+def build(name: str = "dinov2_vitl14", device: str = "cuda", **kwargs) -> DINOv2Encoder:
     """Factory used by configs. Keeps YAML free of import paths."""
     cfg = EncoderConfig(name=name, weights=name, **kwargs)
-    return DINOv2Encoder(cfg)
+    return DINOv2Encoder(cfg, device=device)

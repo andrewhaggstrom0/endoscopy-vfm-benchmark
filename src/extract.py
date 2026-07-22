@@ -32,9 +32,11 @@ from src.cache.store import EmbeddingStore
 from src.data import cholecseg8k, cholec80_frames
 from src.encoders.dinov2 import build as build_dinov2
 from src.encoders.clip import build as build_clip
+from src.encoders.endovit import build as build_endovit
 
 BUILDERS = {"src.encoders.dinov2.build": build_dinov2,
-            "src.encoders.clip.build": build_clip}
+            "src.encoders.clip.build": build_clip,
+            "src.encoders.endovit.build": build_endovit}
 LOADERS = {"cholecseg8k": cholecseg8k, "cholec80": cholec80_frames}
 
 
