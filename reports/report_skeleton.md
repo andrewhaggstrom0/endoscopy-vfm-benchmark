@@ -155,8 +155,30 @@ Jitter ratio by window:
   over-smoothing erases short rare phases. **w ≈ 61 is the honest operating
   point**; reporting accuracy alone would wrongly suggest more smoothing is
   always better.
+#### Causal (trailing-window) smoothing — the deployment case `[HAVE]`
+
+| Window | EndoViT | DINOv2 | CLIP |
+|---|---|---|---|
+| w=1 | **0.719** | 0.689 | 0.661 |
+| w=15 | **0.771** | 0.767 | 0.752 |
+| w=31 | 0.777 | **0.782** | 0.764 |
+| w=61 | 0.765 | **0.779** | 0.758 |
+| w=121 | 0.727 | **0.747** | 0.718 |
+
+- **The inversion survives.** DINOv2 overtakes EndoViT between w=15 and w=31 —
+  the *same* crossover window as centered smoothing. The result does not depend
+  on access to future frames, so it holds for real-time systems.
+- **Causal smoothing reveals a true optimum that centered smoothing hid.**
+  Accuracy peaks at w=31 and declines (0.782 → 0.747 for DINOv2), because a
+  trailing window necessarily lags every phase transition. Under centered
+  smoothing accuracy rose monotonically — an artifact of hindsight.
+- Macro-F1 collapses *below* the unsmoothed baseline by w=121
+  (0.550 / 0.500 / 0.499): over-smoothing plus lag erases short rare phases.
+- **Honest operating point: w ≈ 31.** There DINOv2 leads on both accuracy
+  (0.782 vs 0.777) and macro-F1 (0.689 vs 0.670).
+
 - **Figure 2** `[NEED]`: accuracy and jitter vs. window, one line per encoder,
-  with the crossing point annotated. This is the paper's headline figure.
+  centered and causal panels, crossover annotated. Headline figure.
 
 ### 4.4 Is drift signal or noise? `[HAVE]`
 
@@ -175,8 +197,6 @@ component. The ordering matches the stability ranking, an internal consistency
 check.
 
 ### 4.5 Remaining experiments `[NEED]`
-- **Causal (trailing-window) smoothing** — does the inversion survive the
-  realistic deployment case? Highest-priority robustness check.
 - **AutoLaparo cross-procedure transfer** — EndoViT has not seen hysterectomy;
   the control for the domain-overlap confound (§5.3).
 - Endoscopic corruption suite (smoke, specular, motion blur, fog, blood).
@@ -214,9 +234,9 @@ bland encoder from a well-organized one.
   in self-supervised pretraining. Its *frame-level* lead conflates domain
   pretraining with domain familiarity. AutoLaparo is the control. Note this
   cuts against EndoViT's already-losing smoothed result, strengthening §4.3.
-- **Centered smoothing is generous.** It uses future frames. Causal smoothing
-  is the deployment case and would be worse; the inversion must be verified
-  there.
+- ~~Centered smoothing is generous.~~ **Resolved:** the inversion reproduces
+  under causal (trailing-window) smoothing at the same crossover window, so it
+  is not an artifact of hindsight.
 - Three encoders is a small basis for a rank correlation.
 - No learned temporal head evaluated — the claim concerns frozen features
   under standard protocols, not end-to-end systems.
