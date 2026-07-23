@@ -1,0 +1,12 @@
+{
+  "centered_crossover": [
+    "31",
+    "endovit_vitb16",
+    "dinov2_vits14"
+  ],
+  "causal_crossover": [
+    "31",
+    "endovit_vitb16",
+    "dinov2_vits14"
+  ]
+}
