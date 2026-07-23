@@ -66,7 +66,7 @@ def run_encoder(name, cache_dir, frames_dir, split):
     from sklearn.linear_model import LogisticRegression
     scaler = StandardScaler().fit(Xtr)
     clf = LogisticRegression(C=1.0, max_iter=2000, class_weight="balanced",
-                             n_jobs=-1, random_state=0).fit(scaler.transform(Xtr), ytr)
+                             random_state=0).fit(scaler.transform(Xtr), ytr)
 
     rows = []
     for vid in test_ids:

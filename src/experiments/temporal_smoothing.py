@@ -80,7 +80,7 @@ def main() -> int:
         X, y = np.concatenate(X), np.concatenate(y)
         sc = StandardScaler().fit(X)
         clf = LogisticRegression(C=1.0, max_iter=2000, class_weight="balanced",
-                                 n_jobs=-1, random_state=0).fit(sc.transform(X), y)
+                                 random_state=0).fit(sc.transform(X), y)
         print(f"{name}: probe fitted")
 
         for w in args.windows:

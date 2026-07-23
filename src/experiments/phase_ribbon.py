@@ -55,7 +55,7 @@ def _train_clf(cache_dir, frames_dir, train_ids):
     X, y = np.concatenate(X), np.concatenate(y)
     scaler = StandardScaler().fit(X)
     clf = LogisticRegression(C=1.0, max_iter=2000, class_weight="balanced",
-                             n_jobs=-1, random_state=0).fit(scaler.transform(X), y)
+                             random_state=0).fit(scaler.transform(X), y)
     return scaler, clf
 
 
