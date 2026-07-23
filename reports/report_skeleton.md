@@ -22,38 +22,138 @@ Primary evidence: 5-fold CV over all 80 Cholec80 videos
 
 ## 1. Introduction `[HAVE]`
 
-- Frozen VFMs as perception backbones for surgical/robotic systems; the
-  practical question is which backbone to pay for.
-- Standard evaluation: linear probe / kNN on i.i.d. sampled frames
-  (Ramesh et al. MedIA 2023; SurgeNetXL; PL-Stitch).
-- **The gap.** A deployed surgical system consumes an ordered stream and
-  aggregates over it. Frame-level protocols measure the one condition the
-  system never operates in.
-- **Contributions:**
-  1. **The domain-pretraining advantage is largely temporal-recoverable.**
-     EndoViT's frame-level lead over DINOv2 shrinks 85% under causal
-     smoothing to non-significance; its lead over BiomedCLIP shrinks 64%.
-  2. **The effect is specific to the domain-pretrained encoder.** The
-     DINOv2–CLIP gap is unchanged by smoothing (+0.033 → +0.032, both
-     p < 0.001), ruling out a generic compression-toward-the-mean explanation.
-  3. **Supervision beats domain.** BiomedCLIP ≈ CLIP at every window; medical
-     pretraining delivered by language supervision transfers nothing.
-  4. **Magnitude.** All four encoders over-segment surgical phase by 80–124×
-     at frame accuracies that read as respectable.
-  5. A temporal reliability suite with a variance normalization that raw drift
-     metrics demonstrably require; 12 synthetic controls; released code.
-  6. **A retracted result.** An apparent rank inversion at n = 32 did not
-     replicate at n = 80 (§5.3). We report the retraction because it bears on
-     how sub-2-point margins in this literature should be read.
+Frozen vision foundation models are now the default perception backbone for
+surgical video systems. The practical question a group faces is which backbone
+to adopt — and increasingly, whether to pay for surgical-domain pretraining
+(EndoViT [Batic et al. 2024], SurgeNet/SurgeNetXL [Jaspers et al., MedIA 2025],
+ZEN [arXiv:2602.13633]) over a general-purpose encoder such as DINOv2.
 
-## 2. Related work `[NEED: lit review pass]`
-- Phase recognition: EndoNet → TeCNO → Trans-SVNet → LoViT → SKiT. **Framing:**
-  these temporal models exist because frozen features are unstable; we quantify
-  what their aggregation recovers, and show it partly substitutes for domain
-  pretraining.
-- Surgical/medical foundation models: EndoViT, BiomedCLIP, SurgeNetXL,
-  SurgXBench (WACV 2026).
-- Frozen-feature protocols and their implicit i.i.d. assumption.
+That question is answered empirically, and the answer depends on how the
+encoders are compared. Two evaluation regimes coexist in this literature:
+
+1. **Frame-level probes.** Linear probing and kNN on frozen features from
+   independently sampled frames, reported as representation-quality proxies —
+   e.g. SurgLaVi/SurgCLIP [arXiv:2509.10555], OphCLIP [arXiv:2411.15421],
+   PeskaVLP [arXiv:2410.00263], and the SSL phase-recognition study of
+   [Nature Sci. Rep. 2025], which trains a linear classifier on frozen encoders
+   under five-fold cross-validation.
+2. **Frozen-backbone + temporal aggregation.** The two-stage protocol
+   introduced by TeCNO: frame-level feature extraction followed by a
+   multi-stage temporal convolutional network trained on the cached features.
+   This is the protocol ZEN uses for its frozen-backbone, fine-tuned, and
+   few-shot settings [arXiv:2602.13633], and the one adopted in the controlled
+   cataract-surgery study of [arXiv:2604.10514].
+
+**These are not the same measurement, and the relationship between them is
+unexamined.** Regime (1) is what most representation-learning papers report
+when comparing encoders; regime (2) is what a deployed system actually
+instantiates. No published work we are aware of quantifies how much of a
+frame-level advantage survives temporal aggregation, or tests whether that
+survival differs by pretraining type.
+
+We measure exactly that, for four encoders spanning the pretraining 2×2
+(general/medical × self-supervised/language-supervised), on Cholec80, with
+paired video-level statistics over all 80 videos.
+
+**Contributions.**
+
+1. **The domain-pretraining advantage is largely temporal-recoverable.**
+   EndoViT leads DINOv2 by 6.0 accuracy points under frame-level probing
+   (p < 0.001, 80 paired videos). Under causal temporal smoothing, 85% of that
+   advantage disappears and the residual is statistically indistinguishable
+   from zero.
+2. **The effect is specific to the domain-pretrained encoder.** Every EndoViT
+   gap shrinks 55–85%; the DINOv2–CLIP gap is unchanged (+0.033 → +0.032, both
+   p < 0.001). This rules out generic compression from smoothing and localizes
+   the effect to what surgical pretraining contributes.
+3. **Supervision beats domain.** BiomedCLIP ≈ CLIP at every window
+   (well-powered null); both self-supervised encoders beat both
+   language-supervised ones. Medical pretraining delivered by language
+   supervision does not transfer to surgical video.
+4. **Magnitude.** All four encoders over-segment surgical phase by 80–124× at
+   frame accuracies that read as respectable.
+5. **A lower bound.** Our aggregator is a majority filter — far weaker than the
+   MS-TCN used in regime (2). That a trivial smoother already erases 85% of the
+   advantage bounds from below what a learned temporal head would recover.
+6. **A retracted result and its implication.** An apparent rank inversion on a
+   32-video split did not replicate at n = 80 (§5.3). We report the retraction
+   because sub-2-point encoder margins are widely reported in this literature
+   without paired error bars.
+
+## 2. Related work
+
+### 2.1 Frozen-feature evaluation and its known fragility `[HAVE]`
+Concerns about probe-based model comparison predate this application:
+Resnick et al. (2019) showed that models performing weakly under linear probing
+can perform better under alternative readouts, and subsequent work on readout
+model switching [arXiv:2302.09579] argues that probe choice is a confound
+rather than a neutral measurement instrument. Our §4.1 result — linear probing
+selects EndoViT while kNN selects BiomedCLIP — is a surgical instance of this
+known phenomenon, and we treat it as motivation rather than as a novel
+observation.
+
+The reproducibility dimension has been documented most sharply outside
+medicine. A recent audit of geospatial foundation models [arXiv:2605.12678]
+finds that papers reporting the same checkpoint on the same benchmark under the
+same nominal linear-probe protocol disagree by up to 12.7 points at the 90th
+percentile — an order of magnitude beyond typical seed variance — largely
+because probe recipes go undisclosed. §5.3 reports the surgical analogue: on a
+32-video Cholec80 test split, no pairwise encoder comparison in our panel
+reached significance, including one we initially believed.
+
+### 2.2 Temporal models in surgical phase recognition `[NEED: expand]`
+The line from EndoNet through TeCNO, Trans-SVNet, LoViT and SKiT establishes
+that frame-level features require temporal modeling to reach usable accuracy;
+current systems report 92–93% under relaxed metrics, against the 0.66–0.72
+frame-level accuracies we measure for frozen features. **Framing:** these
+architectures exist because frozen frame-level features are temporally
+unreliable. We quantify what their aggregation recovers, and show that this
+recovery substantially substitutes for domain-specific pretraining.
+
+Supporting evidence for the substitution view already appears in the
+literature without being named as such. SurgLaVi reports that a linear probe on
+frozen SurgCLIP features comes within 2.34% F1 of a specialized architecture,
+and that jointly-optimized backbone-plus-aggregation models retain only a 7.4%
+average advantage despite far greater complexity [arXiv:2509.10555]. Work on
+alignment-preserving temporal adaptation similarly finds that a lightweight
+temporal adapter over a frozen SurgVLP encoder improves phase recognition while
+preserving the pretrained embedding space [Bioengineering 13(6):640].
+
+### 2.3 Surgical and medical foundation models `[NEED: expand]`
+EndoViT (MAE on Endo700k), SurgeNet/SurgeNetXL, ZEN, and the surgical VLP
+family (SurgVLP, PeskaVLP, SurgCLIP, OphCLIP) constitute the domain-pretrained
+alternatives to general encoders; BiomedCLIP represents medical-domain
+pretraining via language supervision on static biomedical figures.
+
+Reported domain-pretraining gains are substantial but protocol-dependent.
+SurgeNetXL reports procedure-specific pretraining improving Dice by 10.0–29.6%
+over ImageNet initialization **with frozen weights**, and 2.8–12.8% with
+trainable weights [Jaspers et al., MedIA 2025] — the frozen-encoder setting
+inflates the apparent benefit by roughly 2–3×, a pattern consistent with our
+finding on the temporal axis. ZEN reports consistent gains over existing
+surgical foundation models across 20 tasks under frozen-backbone, few-shot and
+zero-shot settings [arXiv:2602.13633].
+
+### 2.4 The closest prior work `[HAVE]`
+A controlled study of data-efficient phase segmentation in small-incision
+cataract surgery [arXiv:2604.10514] is the nearest neighbour to this paper. It
+uses a shared MS-TCN++ temporal head over frozen cached features across
+multiple foundation-model backbones, finds self-supervised representations
+outperform supervised encoders, and — most relevantly — cautions that
+*deployment decisions should not rely on peak accuracy alone*, noting that a
+smaller ViT-L may offer a better accuracy/compute trade-off and that
+cataract-domain pretraining yields **mixed, backbone-dependent** transfer.
+
+**How we differ.** That study compares backbones *under* a fixed temporal head;
+we compare the *same* encoders across the frame-level and aggregated regimes
+and measure the change in each pairwise gap. It reports point estimates; we
+report paired video-level bootstrap intervals over all 80 videos, which is what
+lets us distinguish a shrinking-but-real advantage from one that has become
+indistinguishable from zero. And it does not isolate whether shrinkage is
+specific to domain-pretrained encoders — our §4.3 contrast between EndoViT
+pairs (55–85% shrinkage) and general-encoder pairs (2–5%) is the result that
+makes the effect attributable to pretraining type rather than to smoothing
+itself.
 
 ## 3. Method
 
