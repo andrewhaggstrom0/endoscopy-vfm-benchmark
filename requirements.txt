@@ -12,3 +12,4 @@ tqdm
 wandb
 pytest
 open_clip_torch
+tabulate

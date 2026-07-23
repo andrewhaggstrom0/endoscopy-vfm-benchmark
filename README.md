@@ -1,32 +1,49 @@
-# Benchmarking Vision Foundation Models for Endoscopic Video Understanding
+# Frame-Level Accuracy Selects the Wrong Backbone
 
-**Research question:** Does frame-level linear-probe accuracy predict the temporal
-reliability of frozen vision foundation model features on endoscopic video?
+Temporal evaluation of frozen vision foundation models for surgical video.
 
-See [`reports/abstract_v0.md`](reports/abstract_v0.md) for the pre-registered abstract,
-predictions, and stopping rules. That document is the scope contract.
+**Finding.** Four frozen encoders rank EndoViT > DINOv2 > BiomedCLIP > CLIP under
+the standard frame-level probe. Apply the temporal smoothing any deployed
+surgical system uses and the ranking inverts: DINOv2 leads and EndoViT falls to
+third. The standard metric selects the wrong backbone — under offline *and*
+real-time smoothing.
 
-## Status
-Week 1 of 8 (started 2026-07-20). Infrastructure only; no results yet.
+All encoders over-segment surgical phase by 80–124× at 0.66–0.72 frame accuracy.
 
-## Compute
-WashU SLURM cluster. Embeddings cached under `$BIGDIR`, not in this repo.
+See [`reports/RESULTS.md`](reports/RESULTS.md) for all tables,
+[`reports/report_skeleton.md`](reports/report_skeleton.md) for the write-up,
+and [`LEDGER.md`](LEDGER.md) for the failure log.
 
-## Quickstart
+![smoothing inversion](reports/figures/smoothing_inversion.png)
+
+## Reproduce
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
+conda create -n endo-vfm python=3.11 -y && conda activate endo-vfm
 pip install -r requirements.txt
-python -m src.extract --config configs/dinov2_cholecseg8k.yaml
+export BIGDIR=/your/storage HF_HOME=$BIGDIR/hf_cache
+
+python scripts/decode_cholec80.py                    # video -> 1fps frames
+python -m src.extract --config configs/dinov2_cholec80.yaml
+python -m src.experiments.reproduction_gate --cache ... --frames ...
+python -m src.experiments.temporal_smoothing --caches ... --causal
+python -m src.experiments.figure_smoothing
 ```
 
 ## Layout
 | Path | Purpose |
 |---|---|
-| `src/encoders/` | One file per model, uniform `Encoder` interface |
-| `src/cache/` | Memory-mapped embedding store with SHA256 manifests |
+| `src/encoders/` | One file per model, uniform frozen `Encoder` interface |
+| `src/cache/` | Memmap embedding store, SHA256-verified manifests |
 | `src/data/` | Loaders and **video-level** splits (never frame-level) |
-| `src/metrics/` | Temporal reliability suite |
-| `src/corruptions/` | Endoscopy-specific corruption suite |
-| `src/experiments/` | Pure config -> results.json entrypoints |
-| `reports/` | Abstract, figures, technical report |
-| `LEDGER.md` | Running log of failures and dead ends |
+| `src/metrics/` | Temporal reliability suite + optical-flow coupling |
+| `src/experiments/` | Config → results.json, no side effects |
+| `tests/` | 12 synthetic controls gating the temporal metrics |
+
+## Method notes
+- Splits and bootstrap are **video-level**: frames within a surgery are
+  near-duplicates, so frame-level splitting leaks and frame-level bootstrapping
+  gives intervals an order of magnitude too tight.
+- Drift is **variance-normalized**; raw drift rewards low-variance encoders
+  (see `LEDGER.md`, 2026-07-21).
+- Smoothing is reported **centered and causal**; only causal is deployable.
