@@ -33,10 +33,12 @@ from src.data import cholecseg8k, cholec80_frames
 from src.encoders.dinov2 import build as build_dinov2
 from src.encoders.clip import build as build_clip
 from src.encoders.endovit import build as build_endovit
+from src.encoders.biomedclip import build as build_biomedclip
 
 BUILDERS = {"src.encoders.dinov2.build": build_dinov2,
             "src.encoders.clip.build": build_clip,
-            "src.encoders.endovit.build": build_endovit}
+            "src.encoders.endovit.build": build_endovit,
+            "src.encoders.biomedclip.build": build_biomedclip}
 LOADERS = {"cholecseg8k": cholecseg8k, "cholec80": cholec80_frames}
 
 
