@@ -31,19 +31,26 @@ from sklearn.preprocessing import StandardScaler
 from src.data.splits import ordered_split
 
 
-def majority_filter(preds: np.ndarray, w: int) -> np.ndarray:
-    """Centered majority vote over a window of w frames (w odd, w=1 = identity).
+def majority_filter(preds: np.ndarray, w: int, causal: bool = False) -> np.ndarray:
+    """Majority vote over a window of w frames (w=1 = identity).
 
-    Causal alternatives exist (trailing window) and would be the honest choice
-    for a real-time system; centered is the standard offline smoother and the
-    generous case -- if even THIS is needed, the point stands.
+    causal=False: centered window [i-w/2, i+w/2]. Uses FUTURE frames, so it is
+      an offline smoother -- the generous case.
+    causal=True: trailing window [i-w+1, i]. Only past frames, which is the
+      only option for a real-time surgical system. Strictly harder.
+
+    The headline rank inversion must be verified under causal smoothing; if it
+    only holds for the centered filter, it is an artifact of hindsight.
     """
     if w <= 1:
         return preds.copy()
-    half = w // 2
     out = np.empty_like(preds)
     for i in range(len(preds)):
-        lo, hi = max(0, i - half), min(len(preds), i + half + 1)
+        if causal:
+            lo, hi = max(0, i - w + 1), i + 1
+        else:
+            half = w // 2
+            lo, hi = max(0, i - half), min(len(preds), i + half + 1)
         out[i] = Counter(preds[lo:hi]).most_common(1)[0][0]
     return out
 
@@ -61,6 +68,8 @@ def main() -> int:
     ap.add_argument("--protocol", default="train40_val8_test32")
     ap.add_argument("--windows", type=int, nargs="+",
                     default=[1, 3, 5, 9, 15, 31, 61, 121])
+    ap.add_argument("--causal", action="store_true",
+                    help="trailing window only (real-time deployment case)")
     ap.add_argument("--out", default="reports/temporal_smoothing.json")
     args = ap.parse_args()
 
@@ -87,7 +96,8 @@ def main() -> int:
             accs, f1s, ratios = [], [], []
             for v in test_ids:
                 E, lab = _load(cdir, frames_dir, v)
-                p = majority_filter(clf.predict(sc.transform(E)), w)
+                p = majority_filter(clf.predict(sc.transform(E)), w,
+                                    causal=args.causal)
                 gt_t = int(np.sum(lab[1:] != lab[:-1]))
                 pr_t = int(np.sum(p[1:] != p[:-1]))
                 accs.append(float((p == lab).mean()))
@@ -105,7 +115,8 @@ def main() -> int:
     df.to_csv("reports/temporal_smoothing.csv", index=False)
 
     print("\n" + "=" * 64)
-    print("TEMPORAL SMOOTHING SWEEP (centered majority filter)")
+    mode = "CAUSAL (trailing)" if args.causal else "CENTERED (offline)"
+    print(f"TEMPORAL SMOOTHING SWEEP  |  {mode} majority filter")
     print("=" * 64)
     for enc in df.encoder.unique():
         d = df[df.encoder == enc]

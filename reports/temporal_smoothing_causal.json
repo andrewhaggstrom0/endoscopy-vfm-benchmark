@@ -1,0 +1,170 @@
+[
+  {
+    "encoder": "dinov2_vits14",
+    "window": 1,
+    "accuracy": 0.6888119971275666,
+    "macro_f1": 0.5838056323843822,
+    "jitter_ratio": 110.52291666666666
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 3,
+    "accuracy": 0.719824625853022,
+    "macro_f1": 0.6193355903292517,
+    "jitter_ratio": 55.72812499999999
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 5,
+    "accuracy": 0.7376520163787301,
+    "macro_f1": 0.6412528494304237,
+    "jitter_ratio": 36.96875
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 9,
+    "accuracy": 0.7555682812243207,
+    "macro_f1": 0.6637224082886557,
+    "jitter_ratio": 22.615625
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 15,
+    "accuracy": 0.7669955395259467,
+    "macro_f1": 0.6815214661497303,
+    "jitter_ratio": 14.819791666666667
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 31,
+    "accuracy": 0.7823281734185724,
+    "macro_f1": 0.6890208260275281,
+    "jitter_ratio": 8.096875
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 61,
+    "accuracy": 0.7788607361371,
+    "macro_f1": 0.648837750115371,
+    "jitter_ratio": 3.8875
+  },
+  {
+    "encoder": "dinov2_vits14",
+    "window": 121,
+    "accuracy": 0.7469890334779228,
+    "macro_f1": 0.5497194758805427,
+    "jitter_ratio": 2.2375
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 1,
+    "accuracy": 0.6612346066241057,
+    "macro_f1": 0.5563516805523996,
+    "jitter_ratio": 124.33749999999999
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 3,
+    "accuracy": 0.6937589448078866,
+    "macro_f1": 0.5920189808185722,
+    "jitter_ratio": 63.6875
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 5,
+    "accuracy": 0.714726443883916,
+    "macro_f1": 0.6168278537005755,
+    "jitter_ratio": 41.91979166666667
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 9,
+    "accuracy": 0.73543729797289,
+    "macro_f1": 0.6437738217572644,
+    "jitter_ratio": 25.170833333333334
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 15,
+    "accuracy": 0.7518514188975227,
+    "macro_f1": 0.6601375369901704,
+    "jitter_ratio": 16.54479166666667
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 31,
+    "accuracy": 0.7637607398036852,
+    "macro_f1": 0.6629176369372817,
+    "jitter_ratio": 8.245833333333334
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 61,
+    "accuracy": 0.7582919762538679,
+    "macro_f1": 0.6203760936242235,
+    "jitter_ratio": 4.542708333333333
+  },
+  {
+    "encoder": "clip_vitb16",
+    "window": 121,
+    "accuracy": 0.7180925709534172,
+    "macro_f1": 0.499961479950307,
+    "jitter_ratio": 2.3677083333333333
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 1,
+    "accuracy": 0.7191525946128519,
+    "macro_f1": 0.6072997223298378,
+    "jitter_ratio": 79.71770833333333
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 3,
+    "accuracy": 0.7386200794672129,
+    "macro_f1": 0.6317307170381772,
+    "jitter_ratio": 39.48645833333333
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 5,
+    "accuracy": 0.7507936673699178,
+    "macro_f1": 0.6494088402735687,
+    "jitter_ratio": 26.53125
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 9,
+    "accuracy": 0.7621815274610542,
+    "macro_f1": 0.6694789001674442,
+    "jitter_ratio": 16.40416666666667
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 15,
+    "accuracy": 0.7705248630951307,
+    "macro_f1": 0.6739550991822193,
+    "jitter_ratio": 10.758333333333333
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 31,
+    "accuracy": 0.7771182937376133,
+    "macro_f1": 0.6697271616260105,
+    "jitter_ratio": 5.545833333333333
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 61,
+    "accuracy": 0.7648887636177912,
+    "macro_f1": 0.6078933975545163,
+    "jitter_ratio": 3.3291666666666666
+  },
+  {
+    "encoder": "endovit_vitb16",
+    "window": 121,
+    "accuracy": 0.7265141821900419,
+    "macro_f1": 0.49858465053932255,
+    "jitter_ratio": 2.0729166666666665
+  }
+]

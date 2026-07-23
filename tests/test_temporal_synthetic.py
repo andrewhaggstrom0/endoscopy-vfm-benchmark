@@ -115,3 +115,25 @@ def test_normalized_drift_penalizes_bland_encoder():
     # raw drift favors bland; normalized should not blindly do so
     nb, nw = normalized_drift(bland)["drift_ratio"], normalized_drift(walk)["drift_ratio"]
     assert nb > 0.5   # bland's steps are large RELATIVE to its tiny spread
+
+
+def test_causal_filter_uses_no_future_frames():
+    """Causal output at frame i must not depend on frames after i."""
+    from src.experiments.temporal_smoothing import majority_filter
+    a = np.array([0] * 10 + [1] * 10)
+    b = np.array([0] * 10 + [2] * 10)   # differs only after index 9
+    ca = majority_filter(a, 5, causal=True)
+    cb = majority_filter(b, 5, causal=True)
+    assert np.array_equal(ca[:10], cb[:10]), "causal filter peeked at the future"
+
+
+def test_centered_filter_leads_causal():
+    """Centered reaches the new phase earlier than causal, because its window
+    extends forward. This is the operational difference that makes causal the
+    harder, deployment-realistic case."""
+    from src.experiments.temporal_smoothing import majority_filter
+    a = np.array([0] * 10 + [1] * 10)
+    cen = majority_filter(a, 5, causal=False)
+    cau = majority_filter(a, 5, causal=True)
+    assert not np.array_equal(cen, cau), "centered and causal identical"
+    assert int(np.argmax(cen == 1)) < int(np.argmax(cau == 1))
