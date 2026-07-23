@@ -121,7 +121,8 @@ def main() -> int:
     boot = _video_bootstrap(test_ids, lin.test_pred, lin.test_true, vof)
 
     print("\n" + "=" * 56)
-    print("REPRODUCTION GATE  |  DINOv2 ViT-S frozen  |  frame-level")
+    enc_name = Path(args.cache).parts[-3] if len(Path(args.cache).parts) >= 3 else "?"
+    print(f"REPRODUCTION GATE  |  {enc_name} frozen  |  frame-level")
     print("=" * 56)
     print(f"{'':20} {'accuracy':>10} {'macro-F1':>10}")
     print(f"{'linear probe':20} {lin.accuracy:>10.3f} {lin.macro_f1:>10.3f}")

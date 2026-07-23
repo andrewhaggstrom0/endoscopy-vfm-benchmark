@@ -12,6 +12,11 @@
       "acc": 0.6006240249609984,
       "pred_transitions": 550,
       "ratio_vs_gt": 110.0
+    },
+    "endovit_vitb16": {
+      "acc": 0.7093083723348934,
+      "pred_transitions": 350,
+      "ratio_vs_gt": 70.0
     }
   }
 }
