@@ -2,6 +2,14 @@
   "protocol": "train40_val8_test32",
   "aggregates": [
     {
+      "encoder": "biomedclip_vitb16",
+      "frame_acc": 0.6638258242937292,
+      "drift_mean": 0.06698124564718455,
+      "jitter_ratio": 122.36041666666667,
+      "conditional_score": 0.3283523975635333,
+      "mean_run_len": 3.4964355253307944
+    },
+    {
       "encoder": "clip_vitb16",
       "frame_acc": 0.6612346066241057,
       "drift_mean": 0.04233024170389399,
@@ -29,16 +37,19 @@
   "ranked_by_accuracy": [
     "endovit_vitb16",
     "dinov2_vits14",
+    "biomedclip_vitb16",
     "clip_vitb16"
   ],
   "ranked_by_stability": [
     "endovit_vitb16",
     "dinov2_vits14",
+    "biomedclip_vitb16",
     "clip_vitb16"
   ],
   "ranked_by_jitter": [
     "endovit_vitb16",
     "dinov2_vits14",
+    "biomedclip_vitb16",
     "clip_vitb16"
   ],
   "rank_inversion": false,

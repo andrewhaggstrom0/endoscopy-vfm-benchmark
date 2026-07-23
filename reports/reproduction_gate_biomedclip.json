@@ -1,0 +1,35 @@
+{
+  "protocol": "train40_val8_test32",
+  "linear": {
+    "accuracy": 0.6579074221243665,
+    "macro_f1": 0.5780829030758559,
+    "balanced_accuracy": 0.6423422715406025,
+    "per_phase_f1": {
+      "Preparation": 0.516728624535316,
+      "CalotTriangleDissection": 0.7050648085712145,
+      "ClippingCutting": 0.5118312400249809,
+      "GallbladderDissection": 0.7372466806429071,
+      "GallbladderPackaging": 0.5520778537611783,
+      "CleaningCoagulation": 0.5311748677672704,
+      "GallbladderRetraction": 0.4924562462281231
+    }
+  },
+  "knn": {
+    "accuracy": 0.6170121291869145,
+    "macro_f1": 0.5035504426694233,
+    "balanced_accuracy": 0.4795901179672839,
+    "k": 20
+  },
+  "bootstrap_video_level": {
+    "acc_ci": [
+      0.6224109981873124,
+      0.6930439873660941
+    ],
+    "f1_ci": [
+      0.5356961904024218,
+      0.61453313986772
+    ]
+  },
+  "n_train_frames": 107741,
+  "n_test_frames": 76757
+}

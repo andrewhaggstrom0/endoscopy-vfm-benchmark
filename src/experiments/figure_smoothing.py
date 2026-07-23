@@ -27,10 +27,12 @@ import pandas as pd
 
 COLORS = {"endovit_vitb16": "#D55E00",
           "dinov2_vits14": "#0072B2",
-          "clip_vitb16": "#009E73"}
-LABELS = {"endovit_vitb16": "EndoViT (surgical)",
-          "dinov2_vits14": "DINOv2 (self-sup.)",
-          "clip_vitb16": "CLIP (image-text)"}
+          "clip_vitb16": "#009E73",
+          "biomedclip_vitb16": "#CC79A7"}
+LABELS = {"endovit_vitb16": "EndoViT (surgical, SSL)",
+          "dinov2_vits14": "DINOv2 (general, SSL)",
+          "clip_vitb16": "CLIP (general, lang.)",
+          "biomedclip_vitb16": "BiomedCLIP (medical, lang.)"}
 
 
 def find_crossover(df: pd.DataFrame) -> tuple | None:

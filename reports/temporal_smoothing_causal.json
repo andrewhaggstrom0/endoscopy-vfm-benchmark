@@ -166,5 +166,61 @@
     "accuracy": 0.7265141821900419,
     "macro_f1": 0.49858465053932255,
     "jitter_ratio": 2.0729166666666665
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 1,
+    "accuracy": 0.6638258242937293,
+    "macro_f1": 0.558339623507401,
+    "jitter_ratio": 122.36041666666668
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 3,
+    "accuracy": 0.6962560335222119,
+    "macro_f1": 0.5941923804704647,
+    "jitter_ratio": 63.403124999999996
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 5,
+    "accuracy": 0.7168138619265728,
+    "macro_f1": 0.6216870564998239,
+    "jitter_ratio": 41.973958333333336
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 9,
+    "accuracy": 0.7394515397824475,
+    "macro_f1": 0.6503981009374474,
+    "jitter_ratio": 25.477083333333333
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 15,
+    "accuracy": 0.7546734453278331,
+    "macro_f1": 0.6661263612363046,
+    "jitter_ratio": 16.105208333333334
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 31,
+    "accuracy": 0.766491046081275,
+    "macro_f1": 0.6653413998177704,
+    "jitter_ratio": 8.019791666666666
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 61,
+    "accuracy": 0.7604894069716652,
+    "macro_f1": 0.6224274182719156,
+    "jitter_ratio": 4.197916666666667
+  },
+  {
+    "encoder": "biomedclip_vitb16",
+    "window": 121,
+    "accuracy": 0.7295885507888213,
+    "macro_f1": 0.5069800134985343,
+    "jitter_ratio": 2.572916666666667
   }
 ]

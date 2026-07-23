@@ -17,6 +17,11 @@
       "acc": 0.7093083723348934,
       "pred_transitions": 350,
       "ratio_vs_gt": 70.0
+    },
+    "biomedclip_vitb16": {
+      "acc": 0.5616224648985959,
+      "pred_transitions": 520,
+      "ratio_vs_gt": 104.0
     }
   }
 }
