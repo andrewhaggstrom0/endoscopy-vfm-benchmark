@@ -1,0 +1,5 @@
+encoder,drift,spread,drift_over_spread,emb_std
+endovit_vitb16,0.001,0.0019,0.5115,0.425
+dinov2_vits14,0.1244,0.1872,0.6653,2.4605
+biomedclip_vitb16,0.0677,0.1013,0.6708,3.2018
+clip_vitb16,0.0425,0.0535,0.7999,0.9135

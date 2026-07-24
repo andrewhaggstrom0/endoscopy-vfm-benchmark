@@ -347,10 +347,24 @@ comparisons in the same panel reach significance, this is a well-powered null.
 
 \subsection{Is drift signal or noise?}
 Spearman correlations between embedding velocity and optical-flow magnitude
-(10 test videos, all $p<0.05$) are 0.499 (EndoViT), 0.471 (DINOv2) and 0.388
-(CLIP). Drift partly tracks scene motion, but roughly half the variance is
-unexplained by pixel motion, indicating a substantial spurious component. The
-ordering matches the stability ranking.
+(10 test videos, all $p<0.05$) are 0.499 (EndoViT), 0.471 (DINOv2), 0.451
+(BiomedCLIP) and 0.388 (CLIP). Drift partly tracks scene motion, but roughly
+half the variance is unexplained by pixel motion, indicating a substantial
+spurious component.
+
+Notably, this ordering is identical to the normalised-drift ordering and to
+the frame-level accuracy ordering. Three measurements that are methodologically
+independent---a label-free geometric statistic, a pixel-motion correlation, and
+a supervised probe---agree on the encoder ranking at $w=1$. This makes the
+subsequent divergence under smoothing (\S\ref{sec:converge}) more striking: the
+disagreement is introduced by temporal aggregation, not present in the frozen
+features.
+
+BiomedCLIP is the one encoder that separates from CLIP here (0.451 vs 0.388),
+despite indistinguishable phase accuracy (\S4.4). Its embedding motion tracks
+scene motion better without that translating into semantic discriminability.
+\textbf{[Suggestive only---not tested for significance; a paired test over the
+same 10 videos would settle it.]}
 
 \section{Analysis}
 
@@ -363,12 +377,22 @@ Its drift was low because its features were low-variance, not because they were
 stable. The internal contradiction that flagged this was that CLIP
 simultaneously jittered \emph{more} ($124\times$ versus $110\times$).
 
-Normalising drift by sequence spread removes the artifact. Notably EndoViT has
-the \emph{lowest} raw variance of the four (0.425) yet is genuinely the most
-stable once normalised (drift ratio 0.512 versus 0.665 and 0.800)---low
-variance realised well rather than badly. Raw drift and raw variance each
-mislead in isolation; only the normalised metric distinguishes a bland encoder
-from a well-organised one.
+Normalising drift by sequence spread removes the artifact, and across four
+encoders the correction is not marginal but rank-changing. By raw drift the
+ordering is EndoViT (0.001), CLIP (0.043), BiomedCLIP (0.068), DINOv2 (0.124);
+normalised it becomes EndoViT (0.512), DINOv2 (0.665), BiomedCLIP (0.671), CLIP
+(0.800). \textbf{DINOv2 moves from worst to second-best.} An evaluation using
+raw inter-frame drift would rank the encoder that performs best under
+deployment smoothing as the least temporally stable of the four.
+
+Two further observations support treating feature-space scale as a nuisance
+parameter. EndoViT has the \emph{lowest} raw variance (emb\_std 0.425) yet is
+genuinely the most stable once normalised---low variance realised well rather
+than badly. Conversely BiomedCLIP has the \emph{highest} (3.202, above DINOv2's
+2.461) while CLIP has 0.913: a $3.5\times$ difference in feature-space scale
+between two encoders whose phase accuracy is statistically indistinguishable
+(\S4.4). Raw drift and raw variance each mislead in isolation; only the
+normalised metric distinguishes a bland encoder from a well-organised one.
 
 \subsection{A retracted result}
 \label{sec:retraction}
