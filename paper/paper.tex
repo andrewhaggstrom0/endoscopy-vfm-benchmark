@@ -107,11 +107,12 @@ The line from EndoNet \citep{twinanda2017endonet} through TeCNO
 features require temporal modelling to reach usable accuracy. These
 architectures exist \emph{because} frozen frame-level features are temporally
 unreliable. We quantify what their aggregation recovers and show that this
-recovery substantially substitutes for domain-specific pretraining. Recent surgical vision--language work reports that a linear probe on frozen
-features can come within a few F1 points of specialised temporal architectures,
-which retain only a modest average advantage despite far greater complexity.
-\textbf{[VERIFY these figures against SurgLaVi, arXiv:2509.10555, before
-citing]}
+recovery substantially substitutes for domain-specific pretraining. \citet{perez2026surglavi} report that a linear probe on frozen SurgCLIP
+features trails the specialised TAPIS architecture by only 2.34\% F1 while
+outperforming TAPIR and SlowFast, and that architectures jointly optimising
+backbone and temporal aggregation retain a 7.4\% average advantage---which
+they characterise as modest relative to their substantially higher
+architectural complexity and training cost.
 
 \paragraph{Surgical and medical foundation models.}
 EndoViT \citep{batic2024endovit} applies masked autoencoding \citep{he2022mae}
@@ -495,6 +496,12 @@ M.~Oquab, T.~Darcet, T.~Moutakanni, H.~Vo, M.~Szafraniec, V.~Khalidov,
   P.~Fernandez, et~al.
 \newblock {DINOv2}: Learning robust visual features without supervision.
 \newblock \emph{TMLR}, 2024.
+
+\bibitem[Perez et~al.(2026)]{perez2026surglavi}
+A.~Perez, C.~Nwoye, R.~R. Kermani, O.~Mohareri, and M.~A. Jamal.
+\newblock {SurgLaVi}: Large-scale hierarchical dataset for surgical
+  vision--language representation learning.
+\newblock \emph{Medical Image Analysis}, page 103982, 2026.
 
 \bibitem[Radford et~al.(2021)]{radford2021clip}
 A.~Radford, J.~W. Kim, C.~Hallacy, A.~Ramesh, G.~Goh, S.~Agarwal, G.~Sastry,
