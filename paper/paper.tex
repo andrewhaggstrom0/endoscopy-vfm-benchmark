@@ -2,7 +2,7 @@
 \usepackage[margin=0.85in]{geometry}
 \usepackage{graphicx,booktabs,amsmath,url,microtype}
 \usepackage[hidelinks]{hyperref}
-\usepackage[numbers,sort&compress]{natbib}
+\usepackage[round]{natbib}
 \setlength{\tabcolsep}{4pt}
 
 \title{\bf Temporal Aggregation Erases the Advantage of\\
@@ -272,7 +272,9 @@ magnitude in size, and does not depend on any cross-encoder comparison.
 
 \begin{table*}[t]\centering\footnotesize
 \caption{Mean accuracy, 5-fold CV over all 80 videos, causal smoothing.
-Ordering is preserved at every window; the \emph{gaps} are what change.}
+The accuracy ordering is preserved at every window; the \emph{gaps} are what
+change. Macro-F1 (below) reorders at $w\geq61$, but not significantly
+(\S\ref{sec:converge}).}
 \label{tab:acc}
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
@@ -333,7 +335,7 @@ indication of how much temporal repair each encoder would require.
 
 \subsection{Supervision beats domain}
 BiomedCLIP and CLIP are statistically indistinguishable at every window
-$w\geq15$ ($p=0.17$--$0.47$, differences $\leq0.013$, splits 33--42 of 80).
+$w\geq15$ ($p=0.17$--$0.47$, differences $\leq0.013$; BiomedCLIP wins 38--47 of 80 videos).
 Medical-domain pretraining delivered through language supervision transfers
 essentially nothing to surgical video, whereas medical-domain self-supervised
 pretraining yields a large frame-level lead. Both self-supervised encoders beat
@@ -376,9 +378,9 @@ $w=1$, DINOv2 $+0.021$ at $w=121$. We initially treated this as the paper's
 principal finding.
 
 It did not replicate. Under 5-fold cross-validation (80 test videos, 64
-training) the sign never flips and EndoViT leads at every window. On the
-32-video split, no pairwise comparison in the panel reached significance,
-including EndoViT's frame-level lead ($p=0.076$). Both the evaluation-set size
+training) the sign never flips and EndoViT leads at every window. On the 32-video split, neither of the two comparisons we ran reached
+significance at any window, including EndoViT's frame-level lead
+($p=0.076$). Both the evaluation-set size
 and the training-set size differ between the two analyses, so we do not
 attribute the discrepancy to either alone.
 
@@ -466,8 +468,7 @@ W.-Y. Hong, C.-L. Kao, Y.-H. Kuo, J.-R. Wang, W.-L. Chang, and C.-S. Shih.
 
 \bibitem[Ilharco et~al.(2021)]{ilharco2021openclip}
 G.~Ilharco, M.~Wortsman, R.~Wightman, et~al.
-\newblock {OpenCLIP}, 2021.
-\newblock \doi{10.5281/zenodo.5143773}.
+\newblock {OpenCLIP}, 2021. Zenodo 5143773.
 
 \bibitem[Jaspers et~al.(2026)]{jaspers2025surgenetxl}
 T.~J.~M. Jaspers, R.~L.~P.~D. de~Jong, Y.~Li, C.~H.~J. Kusters, F.~H.~A.
