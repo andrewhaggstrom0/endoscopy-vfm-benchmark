@@ -204,18 +204,22 @@ Our panel comprises 6 pairs $\times$ 5 windows $=$ 30 tests, of which 24 are
 significant at $p<0.05$ against $\approx$1.5 expected by chance; the null
 results below are therefore informative rather than merely underpowered.
 
-\begin{table}[t]\centering\small
-\caption{Encoders. VRAM is measured peak allocation during extraction.
-Throughput is I/O-bound in our pipeline and is not model throughput.}
+\begin{table}[t]\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Encoders. All are ViTs at $224\times224$. VRAM is peak allocation
+during extraction; SSL denotes self-supervised and ``lang.'' language
+supervision. Throughput is I/O-bound in our pipeline and is therefore not
+reported as model throughput.}
 \label{tab:encoders}
 \begin{tabular}{@{}llrr@{}}
 \toprule
 Encoder & Pretraining & Dim & VRAM \\
+ & & & (MB) \\
 \midrule
-DINOv2 ViT-S/14   & LVD-142M, SSL      & 384 & 489\,MB \\
-CLIP ViT-B/16     & WIT-400M, language & 768 & 1011\,MB \\
-EndoViT ViT-B/16  & Endo700k, MAE      & 768 & 856\,MB \\
-BiomedCLIP ViT-B/16 & PMC-15M, language & 768 & 856\,MB \\
+DINOv2 S/14     & LVD-142M, SSL   & 384 & 489 \\
+CLIP B/16       & WIT-400M, lang. & 768 & 1011 \\
+EndoViT B/16    & Endo700k, MAE   & 768 & 856 \\
+BiomedCLIP B/16 & PMC-15M, lang.  & 768 & 856 \\
 \bottomrule
 \end{tabular}
 \end{table}
