@@ -2,7 +2,8 @@
 \usepackage[margin=0.85in]{geometry}
 \usepackage{graphicx,booktabs,amsmath,url,microtype}
 \usepackage[hidelinks]{hyperref}
-\usepackage{natbib}
+\usepackage[numbers,sort&compress]{natbib}
+\setlength{\tabcolsep}{4pt}
 
 \title{\bf Temporal Aggregation Erases the Advantage of\\
 Surgical-Domain Pretraining}
@@ -52,12 +53,12 @@ That decision is made empirically, and the answer depends on the evaluation
 regime. Two coexist. The first is \emph{frame-level probing}: linear probes and
 $k$-nearest-neighbour classifiers fit to frozen features from independently
 sampled frames, reported throughout the representation-learning literature as
-proxies for representation quality \citep{ramesh2023dissecting,surglavi2026}.
+proxies for representation quality \citep{ramesh2023dissecting}.
 The second is \emph{frozen-backbone with temporal aggregation}: the two-stage
 protocol of TeCNO \citep{czempiel2020tecno}, in which cached frame-level
 features are passed to a multi-stage temporal convolutional network
 \citep{farha2019mstcn}. This is the protocol used for the frozen-backbone
-setting in recent surgical foundation model evaluations \citep{zen2026,msics2026}.
+setting in recent surgical foundation model evaluations \citep{zen2026,spencer2026msics}.
 
 These are not the same measurement. The first is what most papers report when
 comparing encoders; the second is what a deployed system instantiates. The
@@ -90,13 +91,12 @@ margins in this literature should be interpreted (\S\ref{sec:retraction}).
 
 \paragraph{Frozen-feature evaluation and its fragility.}
 Concerns about probe-based model comparison predate this application:
-\citet{resnick2019probing} showed that models ranking poorly under linear
+Prior work has shown that models ranking poorly under linear
 probing can rank better under alternative readouts. Our observation that linear
 probing and $k$-NN select different encoders (\S\ref{sec:frame}) is a surgical
 instance of this known phenomenon and serves as motivation rather than as a
 novel finding. The reproducibility dimension has been documented sharply
-outside medicine: an audit of geospatial foundation models \citep{gfm2026sota}
-finds that papers reporting the same checkpoint on the same benchmark under the
+outside medicine: a recent audit of geospatial foundation models finds that papers reporting the same checkpoint on the same benchmark under the
 same nominal linear-probe protocol disagree by up to 12.7 points at the
 90th percentile, largely because probe recipes go undisclosed.
 
@@ -107,11 +107,11 @@ The line from EndoNet \citep{twinanda2017endonet} through TeCNO
 features require temporal modelling to reach usable accuracy. These
 architectures exist \emph{because} frozen frame-level features are temporally
 unreliable. We quantify what their aggregation recovers and show that this
-recovery substantially substitutes for domain-specific pretraining. Supporting
-evidence already appears without being named as such: \citet{surglavi2026}
-report that a linear probe on frozen features comes within 2.34\% F1 of a
-specialised architecture, and that jointly optimised backbone-plus-aggregation
-models retain only a 7.4\% average advantage despite far greater complexity.
+recovery substantially substitutes for domain-specific pretraining. Recent surgical vision--language work reports that a linear probe on frozen
+features can come within a few F1 points of specialised temporal architectures,
+which retain only a modest average advantage despite far greater complexity.
+\textbf{[VERIFY these figures against SurgLaVi, arXiv:2509.10555, before
+citing]}
 
 \paragraph{Surgical and medical foundation models.}
 EndoViT \citep{batic2024endovit} applies masked autoencoding \citep{he2022mae}
@@ -125,11 +125,12 @@ only 2.8--12.8\% with trainable weights---the frozen setting inflates the
 apparent benefit roughly two- to threefold.
 
 \paragraph{Closest prior work.}
-A controlled study of phase segmentation in small-incision cataract surgery
-\citep{msics2026} uses a shared MS-TCN++ head over frozen cached features across
-several backbones, and cautions that deployment decisions should not rely on
-peak accuracy alone, noting that domain pretraining yields mixed,
-backbone-dependent transfer. That study compares backbones \emph{under} a fixed
+\citet{spencer2026msics} pair each of several visual encoders with the same
+MS-TCN++ temporal head under identical settings on SICS-155, comparing
+supervised encoders against self-supervised foundation models via a cached
+feature pipeline, and caution that deployment decisions should not rely on peak
+accuracy alone---noting that cataract-domain transfer yields mixed,
+backbone-dependent gains. That study compares backbones \emph{under} a fixed
 temporal head; we compare the same encoders \emph{across} the frame-level and
 aggregated regimes and measure the change in each pairwise gap, with paired
 video-level intervals that distinguish a shrinking-but-real advantage from one
@@ -264,7 +265,7 @@ magnitude in size, and does not depend on any cross-encoder comparison.
 \subsection{The domain advantage converges away}
 \label{sec:converge}
 
-\begin{table}[t]\centering\small
+\begin{table*}[t]\centering\footnotesize
 \caption{Mean accuracy, 5-fold CV over all 80 videos, causal smoothing.
 Ordering is preserved at every window; the \emph{gaps} are what change.}
 \label{tab:acc}
@@ -278,9 +279,9 @@ BiomedCLIP & .676 & .760 & .770 & .762 & .723 \\
 CLIP       & .664 & .753 & .764 & .752 & .710 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-\begin{table}[t]\centering\small
+\begin{table*}[t]\centering\footnotesize
 \caption{Paired accuracy differences, causal smoothing, $n=80$ videos.
 Shrinkage is $1-\Delta_{121}/\Delta_{1}$. All EndoViT gaps shrink; no
 general-encoder gap does.
@@ -298,7 +299,7 @@ DINOv2$-$BiomedCLIP  & $+.021^{**}$  & $+.020^{*}$   & $+.020^{*}$   & 5\% \\
 BiomedCLIP$-$CLIP    & $+.012^{*}$   & $+.006$       & $+.013$       & --- \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 Table~\ref{tab:paired} is the paper's central result. EndoViT's advantage over
 DINOv2 crosses from significant to non-significant between $w=31$ ($p=0.017$)
@@ -408,6 +409,131 @@ deploy, report paired error bars on any margin below a few points, and treat
 frame-level gains from domain pretraining as an upper bound on deployed
 benefit.
 
-\bibliographystyle{plainnat}
-\bibliography{refs}
+\begin{thebibliography}{99}
+\footnotesize
+
+\bibitem[Abu Farha and Gall(2019)]{farha2019mstcn}
+Y.~Abu Farha and J.~Gall.
+\newblock {MS-TCN}: Multi-stage temporal convolutional network for action
+  segmentation.
+\newblock In \emph{CVPR}, 2019.
+
+\bibitem[Bati\'c et~al.(2024)]{batic2024endovit}
+D.~Bati\'c, F.~Holm, E.~\"Ozsoy, T.~Czempiel, and N.~Navab.
+\newblock {EndoViT}: pretraining vision transformers on a large collection of
+  endoscopic images.
+\newblock \emph{Int.\ J.\ Computer Assisted Radiology and Surgery}, 2024.
+
+\bibitem[Czempiel et~al.(2020)]{czempiel2020tecno}
+T.~Czempiel, M.~Paschali, M.~Keicher, W.~Simson, H.~Feussner, S.~T. Kim, and
+  N.~Navab.
+\newblock {TeCNO}: Surgical phase recognition with multi-stage temporal
+  convolutional networks.
+\newblock In \emph{MICCAI}, 2020.
+
+\bibitem[Efron and Tibshirani(1994)]{efron1994bootstrap}
+B.~Efron and R.~J. Tibshirani.
+\newblock \emph{An Introduction to the Bootstrap}.
+\newblock Chapman and Hall/CRC, 1994.
+
+\bibitem[Gao et~al.(2021)]{gao2021transsvnet}
+X.~Gao, Y.~Jin, Y.~Long, Q.~Dou, and P.-A. Heng.
+\newblock Trans-{SVNet}: Accurate phase recognition from surgical videos via
+  hybrid embedding aggregation transformer.
+\newblock In \emph{MICCAI}, 2021.
+
+\bibitem[He et~al.(2022)]{he2022mae}
+K.~He, X.~Chen, S.~Xie, Y.~Li, P.~Doll\'ar, and R.~Girshick.
+\newblock Masked autoencoders are scalable vision learners.
+\newblock In \emph{CVPR}, 2022.
+
+\bibitem[Hong et~al.(2020)]{hong2020cholecseg8k}
+W.-Y. Hong, C.-L. Kao, Y.-H. Kuo, J.-R. Wang, W.-L. Chang, and C.-S. Shih.
+\newblock {CholecSeg8k}: A semantic segmentation dataset for laparoscopic
+  cholecystectomy based on {Cholec80}.
+\newblock \emph{arXiv:2012.12453}, 2020.
+
+\bibitem[Ilharco et~al.(2021)]{ilharco2021openclip}
+G.~Ilharco, M.~Wortsman, R.~Wightman, et~al.
+\newblock {OpenCLIP}, 2021.
+\newblock \doi{10.5281/zenodo.5143773}.
+
+\bibitem[Jaspers et~al.(2025)]{jaspers2025surgenetxl}
+T.~J.~M. Jaspers et~al.
+\newblock Scaling up self-supervised learning for improved surgical foundation
+  models.
+\newblock \emph{Medical Image Analysis}, 2025.
+\textbf{[VERIFY full author list, volume, pages]}
+
+\bibitem[Liu et~al.(2023)]{liu2023skit}
+Y.~Liu, M.~Boels, L.~C. Garcia-Peraza-Herrera, T.~Vercauteren, P.~Dasgupta,
+  A.~Granados, and S.~Ourselin.
+\newblock {SKiT}: A fast key information video transformer for online surgical
+  phase recognition.
+\newblock In \emph{ICCV}, 2023.
+
+\bibitem[Liu et~al.(2025)]{liu2025lovit}
+Y.~Liu, M.~Boels, L.~C. Garcia-Peraza-Herrera, et~al.
+\newblock {LoViT}: Long video transformer for surgical phase recognition.
+\newblock \emph{Medical Image Analysis}, 2025.
+\textbf{[VERIFY year, volume]}
+
+\bibitem[Oquab et~al.(2024)]{oquab2024dinov2}
+M.~Oquab, T.~Darcet, T.~Moutakanni, H.~Vo, M.~Szafraniec, V.~Khalidov,
+  P.~Fernandez, et~al.
+\newblock {DINOv2}: Learning robust visual features without supervision.
+\newblock \emph{TMLR}, 2024.
+
+\bibitem[Radford et~al.(2021)]{radford2021clip}
+A.~Radford, J.~W. Kim, C.~Hallacy, A.~Ramesh, G.~Goh, S.~Agarwal, G.~Sastry,
+  A.~Askell, P.~Mishkin, J.~Clark, G.~Krueger, and I.~Sutskever.
+\newblock Learning transferable visual models from natural language
+  supervision.
+\newblock In \emph{ICML}, 2021.
+
+\bibitem[Ramesh et~al.(2023)]{ramesh2023dissecting}
+S.~Ramesh, V.~Srivastav, D.~Alapatt, T.~Yu, A.~Murali, L.~Sestini, C.~I. Nwoye,
+  et~al.
+\newblock Dissecting self-supervised learning methods for surgical computer
+  vision.
+\newblock \emph{Medical Image Analysis}, 88, 2023.
+
+\bibitem[Spencer et~al.(2026)]{spencer2026msics}
+L.~Spencer, S.~Wang, and C.~Chen.
+\newblock Data-efficient surgical phase segmentation in small-incision cataract
+  surgery: A controlled study of vision foundation models.
+\newblock \emph{arXiv:2604.10514}, 2026.
+
+\bibitem[Twinanda et~al.(2017)]{twinanda2017endonet}
+A.~P. Twinanda, S.~Shehata, D.~Mutter, J.~Marescaux, M.~de~Mathelin, and
+  N.~Padoy.
+\newblock {EndoNet}: A deep architecture for recognition tasks on laparoscopic
+  videos.
+\newblock \emph{IEEE Trans.\ Medical Imaging}, 36(1):86--97, 2017.
+
+\bibitem[Wang et~al.(2022)]{wang2022autolaparo}
+Z.~Wang, B.~Lu, Y.~Long, F.~Zhong, T.-H. Cheung, Q.~Dou, and Y.~Liu.
+\newblock {AutoLaparo}: A new dataset of integrated multi-tasks for
+  image-guided surgical automation in laparoscopic hysterectomy.
+\newblock In \emph{MICCAI}, 2022.
+
+\bibitem[Wightman(2019)]{wightman2019timm}
+R.~Wightman.
+\newblock {PyTorch} image models, 2019.
+\newblock \url{https://github.com/huggingface/pytorch-image-models}.
+
+\bibitem[Zhang et~al.(2023)]{zhang2023biomedclip}
+S.~Zhang, Y.~Xu, N.~Usuyama, et~al.
+\newblock {BiomedCLIP}: A multimodal biomedical foundation model pretrained
+  from fifteen million scientific image-text pairs.
+\newblock \emph{arXiv:2303.00915}, 2023.
+
+\bibitem[{ZEN authors}(2026)]{zen2026}
+{ZEN authors}.
+\newblock A generalizable foundation model for intraoperative understanding
+  across surgical procedures.
+\newblock \emph{arXiv:2602.13633}, 2026.
+\textbf{[VERIFY author list]}
+
+\end{thebibliography}
 \end{document}
