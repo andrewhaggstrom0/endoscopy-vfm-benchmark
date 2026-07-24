@@ -346,6 +346,7 @@ nominal domain proximity does not imply transfer. Given that 24 of 30
 comparisons in the same panel reach significance, this is a well-powered null.
 
 \subsection{Is drift signal or noise?}
+\label{sec:flow}
 Spearman correlations between embedding velocity and optical-flow magnitude
 (10 test videos, all $p<0.05$) are 0.499 (EndoViT), 0.471 (DINOv2), 0.451
 (BiomedCLIP) and 0.388 (CLIP). Drift partly tracks scene motion, but roughly
@@ -363,8 +364,15 @@ features.
 BiomedCLIP is the one encoder that separates from CLIP here (0.451 vs 0.388),
 despite indistinguishable phase accuracy (\S4.4). Its embedding motion tracks
 scene motion better without that translating into semantic discriminability.
-\textbf{[Suggestive only---not tested for significance; a paired test over the
-same 10 videos would settle it.]}
+A paired bootstrap over the same 10 videos confirms this difference is real
+($+0.062$, 95\% CI $[+0.043, +0.085]$, $p<0.001$; BiomedCLIP higher on 9 of 10
+videos). Four of the six pairwise flow comparisons are significant; the two
+that are not are DINOv2--EndoViT ($p=0.069$) and DINOv2--BiomedCLIP
+($p=0.138$).
+
+That DINOv2 and EndoViT do not separate on motion tracking is consistent with
+\S\ref{sec:converge}: the pair whose accuracy gap closes under aggregation is
+also the pair whose embedding dynamics are least distinguishable.
 
 \section{Analysis}
 
