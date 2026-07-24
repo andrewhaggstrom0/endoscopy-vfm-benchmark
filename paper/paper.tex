@@ -101,10 +101,27 @@ same nominal linear-probe protocol disagree by up to 12.7 points at the
 90th percentile, largely because probe recipes go undisclosed.
 
 \paragraph{Temporal models for surgical phase recognition.}
-The line from EndoNet \citep{twinanda2017endonet} through TeCNO
-\citep{czempiel2020tecno}, Trans-SVNet \citep{gao2021transsvnet}, LoViT
-\citep{liu2025lovit} and SKiT \citep{liu2023skit} establishes that frame-level
-features require temporal modelling to reach usable accuracy. These
+Since EndoNet \citep{twinanda2017endonet} established the frame-level baseline,
+the field has advanced almost entirely through temporal modelling. TeCNO
+\citep{czempiel2020tecno} introduced the two-stage protocol---frozen or
+fine-tuned frame features followed by a multi-stage temporal convolutional
+network \citep{farha2019mstcn}---that remains the standard evaluation harness.
+Subsequent work replaced or augmented the aggregator: temporal memory relation
+networks \citep{jin2021tmrnet}, segment-level semantic modelling
+\citep{ding2022segment}, hybrid embedding-aggregation transformers
+(Trans-SVNet, \citealp{gao2021transsvnet}), long-video transformers (LoViT,
+\citealp{liu2025lovit}), and online key-information transformers (SKiT,
+\citealp{liu2023skit}). Reported accuracies now exceed 90\%, against the
+0.66--0.72 we measure for frozen frame-level features.
+
+\textbf{Framing.} This progression is itself evidence for our premise: the
+architectures exist because frozen frame-level features are temporally
+unreliable. What has not been asked is whether the aggregation they supply
+\emph{changes which backbone is best}. We show that it does, and specifically
+that it substitutes for domain pretraining. \citet{funke2023metrics} make a
+complementary argument at the metric level, showing that conclusions in this
+literature are sensitive to evaluation-metric choice; our results extend that
+sensitivity from the metric to the aggregation regime. These
 architectures exist \emph{because} frozen frame-level features are temporally
 unreliable. We quantify what their aggregation recovers and show that this
 recovery substantially substitutes for domain-specific pretraining. \citet{perez2026surglavi} report that a linear probe on frozen SurgCLIP
@@ -115,10 +132,35 @@ they characterise as modest relative to their substantially higher
 architectural complexity and training cost.
 
 \paragraph{Surgical and medical foundation models.}
-EndoViT \citep{batic2024endovit} applies masked autoencoding \citep{he2022mae}
-to Endo700k; SurgeNetXL \citep{jaspers2025surgenetxl} scales surgical SSL;
-BiomedCLIP \citep{zhang2023biomedclip} provides medical-domain pretraining via
-language supervision on biomedical figure--caption pairs. Reported gains are
+Surgical foundation models have proliferated rapidly and differ along two axes
+relevant here: pretraining corpus and supervision signal. Vision-only
+self-supervised models include EndoViT \citep{batic2024endovit}, which applies
+masked autoencoding \citep{he2022mae} to Endo700k; EndoFM
+\citep{wang2023endofm}; GSViT \citep{schmidgall2024gsvit}; and SurgeNetXL
+\citep{jaspers2025surgenetxl}, trained on over 4.7M frames spanning four
+procedures. Vision--language models include PeskaVLP \citep{yuan2024peskavlp}
+and SurgCLIP \citep{perez2026surglavi}. ZEN \citep{zen2026} unifies both
+families via multi-teacher distillation and reports the broadest evaluation to
+date---20 tasks under fine-tuned, frozen-backbone, few-shot and zero-shot
+settings. Outside surgery, BiomedCLIP \citep{zhang2023biomedclip} provides
+medical-domain pretraining via language supervision on 15M biomedical
+figure--caption pairs, which we include as the medical/language-supervised cell
+of our $2\times2$.
+
+Reported domain-pretraining gains are protocol-dependent in a manner directly
+consistent with our finding. \citet{jaspers2025surgenetxl} report
+procedure-specific pretraining improving Dice by 10.0--29.6\% over ImageNet
+initialisation with \emph{frozen} weights but only 2.8--12.8\% with trainable
+weights---the frozen setting inflates the apparent benefit roughly two- to
+threefold on the fine-tuning axis, as we find it does on the temporal axis.
+\textbf{[VERIFY these two ranges against SurgeNetXL Fig.~8 before submission.]}
+
+Most relevantly, \citet{zen2026} evaluate EndoViT on AutoLaparo
+\citep{wang2022autolaparo}---a procedure absent from Endo700k---under the
+TeCNO protocol with an MS-TCN head, and report video-level F1 of 0.636 against
+0.668 for a plain ImageNet-pretrained ViT-B. Outside its pretraining domain and
+under a stronger aggregator than ours, EndoViT's advantage does not merely
+shrink but reverses. We return to this in \S\ref{sec:limits}. Reported gains are
 protocol-dependent in a manner consistent with our finding:
 \citet{jaspers2025surgenetxl} report procedure-specific pretraining improving
 Dice by 10.0--29.6\% over ImageNet initialisation with \emph{frozen} weights but
@@ -259,6 +301,7 @@ collapse to 0.46--0.59. This failure is structural rather than model-specific,
 and concerns exactly the states a single frame cannot disambiguate.
 
 \subsection{Temporal reliability at $w=1$}
+\label{sec:temporal}
 Every encoder over-segments dramatically. Predicted phase-transition rates
 exceed ground truth by $79.7\times$ (EndoViT), $110.5\times$ (DINOv2),
 $122.4\times$ (BiomedCLIP) and $124.3\times$ (CLIP), at frame accuracies of
@@ -301,7 +344,7 @@ Pair & $w{=}1$ & $w{=}31$ & $w{=}121$ & shrink \\
 EndoViT$-$DINOv2     & $+.060^{***}$ & $+.019^{*}$   & $+.009$       & \bf85\% \\
 EndoViT$-$BiomedCLIP & $+.080^{***}$ & $+.040^{***}$ & $+.029^{**}$  & 64\% \\
 EndoViT$-$CLIP       & $+.092^{***}$ & $+.046^{***}$ & $+.041^{***}$ & 55\% \\
-DINOv2$-$CLIP        & $+.033^{***}$ & $+.026^{***}$ & $+.032^{***}$ & \bf2\% \\
+DINOv2$-$CLIP        & $+.033^{***}$ & $+.026^{***}$ & $+.032^{***}$ & \bf1\% \\
 DINOv2$-$BiomedCLIP  & $+.021^{**}$  & $+.020^{*}$   & $+.020^{*}$   & 5\% \\
 BiomedCLIP$-$CLIP    & $+.012^{*}$   & $+.006$       & $+.013$       & --- \\
 \bottomrule
@@ -334,6 +377,7 @@ phase information was present in the frozen features throughout, and P1 gave no
 indication of how much temporal repair each encoder would require.
 
 \subsection{Supervision beats domain}
+\label{sec:supervision}
 BiomedCLIP and CLIP are statistically indistinguishable at every window
 $w\geq15$ ($p=0.17$--$0.47$, differences $\leq0.013$; BiomedCLIP wins 38--47 of 80 videos).
 Medical-domain pretraining delivered through language supervision transfers
@@ -423,6 +467,7 @@ We recommend paired video-level bootstrapping and cross-validation over fixed
 splits whenever a reported margin is small.
 
 \section{Limitations}
+\label{sec:limits}
 \textbf{Domain overlap.} Endo700k includes Cholec80, so EndoViT observed these
 videos during self-supervised pretraining. This inflates its frame-level lead
 and therefore makes the convergence result conservative. \textbf{Single
@@ -471,6 +516,12 @@ T.~Czempiel, M.~Paschali, M.~Keicher, W.~Simson, H.~Feussner, S.~T. Kim, and
   convolutional networks.
 \newblock In \emph{MICCAI}, pages 343--352, 2020.
 
+\bibitem[Ding and Li(2022)]{ding2022segment}
+X.~Ding and X.~Li.
+\newblock Exploring segment-level semantics for online phase recognition from
+  surgical videos.
+\newblock \emph{IEEE Trans.\ Medical Imaging}, 41(11):3309--3319, 2022.
+
 \bibitem[Efron and Tibshirani(1994)]{efron1994bootstrap}
 B.~Efron and R.~J. Tibshirani.
 \newblock \emph{An Introduction to the Bootstrap}.
@@ -486,6 +537,12 @@ X.~Gao, Y.~Jin, Y.~Long, Q.~Dou, and P.-A. Heng.
 \newblock Trans-{SVNet}: Accurate phase recognition from surgical videos via
   hybrid embedding aggregation transformer.
 \newblock In \emph{MICCAI}, 2021.
+
+\bibitem[Jin et~al.(2021)]{jin2021tmrnet}
+Y.~Jin, Y.~Long, C.~Chen, Z.~Zhao, Q.~Dou, and P.-A. Heng.
+\newblock Temporal memory relation network for workflow recognition from
+  surgical video.
+\newblock \emph{IEEE Trans.\ Medical Imaging}, 40(7):1911--1923, 2021.
 
 \bibitem[He et~al.(2022)]{he2022mae}
 K.~He, X.~Chen, S.~Xie, Y.~Li, P.~Doll\'ar, and R.~Girshick.
@@ -556,6 +613,12 @@ L.~Spencer, S.~Wang, and C.~Chen.
   surgery: A controlled study of vision foundation models.
 \newblock \emph{arXiv:2604.10514}, 2026.
 
+\bibitem[Schmidgall et~al.(2024)]{schmidgall2024gsvit}
+S.~Schmidgall, J.~W. Kim, J.~Jopling, and A.~Krieger.
+\newblock General surgery vision transformer: A video pre-trained foundation
+  model for general surgery.
+\newblock \emph{arXiv:2403.05949}, 2024.
+
 \bibitem[Twinanda et~al.(2017)]{twinanda2017endonet}
 A.~P. Twinanda, S.~Shehata, D.~Mutter, J.~Marescaux, M.~de~Mathelin, and
   N.~Padoy.
@@ -569,10 +632,22 @@ Z.~Wang, B.~Lu, Y.~Long, F.~Zhong, T.-H. Cheung, Q.~Dou, and Y.~Liu.
   image-guided surgical automation in laparoscopic hysterectomy.
 \newblock In \emph{MICCAI}, pages 486--496, 2022.
 
+\bibitem[Wang et~al.(2023)]{wang2023endofm}
+Z.~Wang, C.~Liu, S.~Zhang, and Q.~Dou.
+\newblock Foundation model for endoscopy video analysis via large-scale
+  self-supervised pre-train.
+\newblock In \emph{MICCAI}, pages 101--111, 2023.
+
 \bibitem[Wightman(2019)]{wightman2019timm}
 R.~Wightman.
 \newblock {PyTorch} image models, 2019.
 \newblock \url{https://github.com/huggingface/pytorch-image-models}.
+
+\bibitem[Yuan et~al.(2024)]{yuan2024peskavlp}
+K.~Yuan, N.~Navab, and N.~Padoy.
+\newblock Procedure-aware surgical video-language pretraining with hierarchical
+  knowledge augmentation.
+\newblock \emph{NeurIPS}, 37:122952--122983, 2024.
 
 \bibitem[Zhang et~al.(2025)]{zhang2023biomedclip}
 S.~Zhang, Y.~Xu, N.~Usuyama, H.~Xu, J.~Bagga, R.~Tinn, S.~Preston, R.~Rao,
