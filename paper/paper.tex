@@ -1,0 +1,413 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage{graphicx,booktabs,amsmath,url,microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+
+\title{\bf Temporal Aggregation Erases the Advantage of\\
+Surgical-Domain Pretraining}
+\author{Andrew Haggstrom}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Frozen vision foundation models are increasingly selected as perception
+backbones for surgical video systems, and surgical-domain pretraining is
+reported to confer large advantages over general-purpose encoders. We ask how
+much of that advantage survives the temporal aggregation a deployed system
+performs. Benchmarking four encoders spanning the pretraining
+$2\times2$---general/medical $\times$ self-supervised/language-supervised---on
+Cholec80 phase recognition with paired video-level statistics over all 80
+videos, we find that EndoViT leads DINOv2 by 6.0 accuracy points under
+frame-level linear probing ($p<0.001$), but that 85\% of this advantage
+disappears under causal temporal smoothing, leaving a residual gap
+statistically indistinguishable from zero ($+0.009$, $p=0.29$). The effect is
+specific to the domain-pretrained encoder: every EndoViT gap shrinks by
+55--85\%, whereas the DINOv2--CLIP gap is unchanged ($+0.033 \to +0.032$, both
+$p<0.001$), ruling out generic compression from smoothing. Our aggregator is a
+majority filter, substantially weaker than the multi-stage temporal
+convolutional networks used in practice, so this constitutes a lower bound on
+what a learned temporal head would recover. We additionally find that medical
+pretraining delivered by language supervision transfers essentially nothing
+(BiomedCLIP $\approx$ CLIP at every window, a well-powered null), that all four
+encoders over-segment surgical phase by 80--124$\times$ at frame accuracies of
+0.66--0.72, and that raw inter-frame drift is confounded by feature variance
+and must be normalized. We further report a result we retracted: an apparent
+rank inversion observed on a 32-video test split did not replicate at $n=80$,
+which bears on how the sub-two-point encoder margins common in this literature
+should be read. Code, cached embeddings, and evaluation protocol are released.
+\end{abstract}
+
+\section{Introduction}
+
+Frozen vision foundation models are now a default perception backbone for
+surgical video systems. The practical decision a group faces is which backbone
+to adopt, and increasingly whether to pay for surgical-domain pretraining
+\citep{batic2024endovit,jaspers2025surgenetxl,zen2026} over a strong
+general-purpose encoder such as DINOv2 \citep{oquab2024dinov2}.
+
+That decision is made empirically, and the answer depends on the evaluation
+regime. Two coexist. The first is \emph{frame-level probing}: linear probes and
+$k$-nearest-neighbour classifiers fit to frozen features from independently
+sampled frames, reported throughout the representation-learning literature as
+proxies for representation quality \citep{ramesh2023dissecting,surglavi2026}.
+The second is \emph{frozen-backbone with temporal aggregation}: the two-stage
+protocol of TeCNO \citep{czempiel2020tecno}, in which cached frame-level
+features are passed to a multi-stage temporal convolutional network
+\citep{farha2019mstcn}. This is the protocol used for the frozen-backbone
+setting in recent surgical foundation model evaluations \citep{zen2026,msics2026}.
+
+These are not the same measurement. The first is what most papers report when
+comparing encoders; the second is what a deployed system instantiates. The
+relationship between them---how much of a frame-level advantage survives
+aggregation, and whether that survival depends on how the encoder was
+pretrained---is, to our knowledge, unmeasured.
+
+We measure it. Our contributions:
+
+\begin{enumerate}\itemsep2pt
+\item \textbf{The domain-pretraining advantage is largely
+temporal-recoverable.} EndoViT's 6.0-point frame-level lead over DINOv2
+($p<0.001$, 80 paired videos) shrinks by 85\% under causal smoothing to a
+non-significant $+0.009$.
+\item \textbf{The effect is specific to the domain-pretrained encoder.} All
+EndoViT gaps shrink 55--85\%; the DINOv2--CLIP gap does not move. This
+localizes the effect to pretraining type rather than to smoothing itself.
+\item \textbf{Supervision matters more than domain.} BiomedCLIP is
+indistinguishable from CLIP at every window; both self-supervised encoders beat
+both language-supervised ones.
+\item \textbf{Magnitude.} All four encoders over-segment surgical phase by
+80--124$\times$ at frame accuracies that read as respectable.
+\item \textbf{A lower bound.} A majority filter is far weaker than MS-TCN; that
+it already erases 85\% bounds from below what a learned head recovers.
+\item \textbf{A retracted result} and its implication for how small encoder
+margins in this literature should be interpreted (\S\ref{sec:retraction}).
+\end{enumerate}
+
+\section{Related work}
+
+\paragraph{Frozen-feature evaluation and its fragility.}
+Concerns about probe-based model comparison predate this application:
+\citet{resnick2019probing} showed that models ranking poorly under linear
+probing can rank better under alternative readouts. Our observation that linear
+probing and $k$-NN select different encoders (\S\ref{sec:frame}) is a surgical
+instance of this known phenomenon and serves as motivation rather than as a
+novel finding. The reproducibility dimension has been documented sharply
+outside medicine: an audit of geospatial foundation models \citep{gfm2026sota}
+finds that papers reporting the same checkpoint on the same benchmark under the
+same nominal linear-probe protocol disagree by up to 12.7 points at the
+90th percentile, largely because probe recipes go undisclosed.
+
+\paragraph{Temporal models for surgical phase recognition.}
+The line from EndoNet \citep{twinanda2017endonet} through TeCNO
+\citep{czempiel2020tecno}, Trans-SVNet \citep{gao2021transsvnet}, LoViT
+\citep{liu2025lovit} and SKiT \citep{liu2023skit} establishes that frame-level
+features require temporal modelling to reach usable accuracy. These
+architectures exist \emph{because} frozen frame-level features are temporally
+unreliable. We quantify what their aggregation recovers and show that this
+recovery substantially substitutes for domain-specific pretraining. Supporting
+evidence already appears without being named as such: \citet{surglavi2026}
+report that a linear probe on frozen features comes within 2.34\% F1 of a
+specialised architecture, and that jointly optimised backbone-plus-aggregation
+models retain only a 7.4\% average advantage despite far greater complexity.
+
+\paragraph{Surgical and medical foundation models.}
+EndoViT \citep{batic2024endovit} applies masked autoencoding \citep{he2022mae}
+to Endo700k; SurgeNetXL \citep{jaspers2025surgenetxl} scales surgical SSL;
+BiomedCLIP \citep{zhang2023biomedclip} provides medical-domain pretraining via
+language supervision on biomedical figure--caption pairs. Reported gains are
+protocol-dependent in a manner consistent with our finding:
+\citet{jaspers2025surgenetxl} report procedure-specific pretraining improving
+Dice by 10.0--29.6\% over ImageNet initialisation with \emph{frozen} weights but
+only 2.8--12.8\% with trainable weights---the frozen setting inflates the
+apparent benefit roughly two- to threefold.
+
+\paragraph{Closest prior work.}
+A controlled study of phase segmentation in small-incision cataract surgery
+\citep{msics2026} uses a shared MS-TCN++ head over frozen cached features across
+several backbones, and cautions that deployment decisions should not rely on
+peak accuracy alone, noting that domain pretraining yields mixed,
+backbone-dependent transfer. That study compares backbones \emph{under} a fixed
+temporal head; we compare the same encoders \emph{across} the frame-level and
+aggregated regimes and measure the change in each pairwise gap, with paired
+video-level intervals that distinguish a shrinking-but-real advantage from one
+that has become indistinguishable from zero.
+
+\section{Method}
+
+\subsection{Encoders}
+We evaluate four encoders spanning the pretraining $2\times2$
+(Table~\ref{tab:encoders}): DINOv2 ViT-S/14 \citep{oquab2024dinov2} (general,
+self-supervised), CLIP ViT-B/16 \citep{radford2021clip} (general,
+language-supervised), EndoViT ViT-B/16 \citep{batic2024endovit} (surgical,
+self-supervised MAE), and BiomedCLIP ViT-B/16 \citep{zhang2023biomedclip}
+(medical, language-supervised).
+
+All encoders are frozen and used in evaluation mode. Each applies its own
+normalisation statistics---ImageNet, CLIP, endoscopic, and PMC respectively---as
+using incorrect statistics silently degrades features. Frames are resized to
+$224\times224$ with bicubic interpolation and antialiasing. We take the
+pre-projection pooled representation for both CLIP variants so that all four
+encoders are probed on comparable features. Implementations use \texttt{timm}
+\citep{wightman2019timm} and \texttt{open\_clip} \citep{ilharco2021openclip}.
+
+Embeddings are extracted once and cached as memory-mapped arrays partitioned by
+a hash of the encoder configuration, with SHA-256 manifests verified on every
+read; all downstream experiments are pure functions over this cache.
+
+\subsection{Evaluation protocols}
+\textbf{P1, linear probe}: class-balanced multinomial logistic regression on
+standardised frozen features. \textbf{P2, $k$-NN}: $k=20$, cosine metric, no
+learned head. \textbf{P3, temporally smoothed accuracy}: a majority filter of
+window $w$ applied to the P1 prediction stream. We report both \emph{centered}
+(offline) and \emph{causal/trailing} (real-time; the only deployable variant)
+filters; $w=1$ recovers P1 exactly.
+
+\subsection{Temporal reliability metrics}
+All metrics are computed within a single contiguous sequence and never across
+video boundaries. \emph{Normalized drift} is the mean inter-frame cosine
+distance divided by the sequence's spread about its centroid; the normalisation
+is necessary rather than cosmetic (\S\ref{sec:variance}). \emph{Boundary
+jitter} is the predicted phase-transition rate as a ratio to the ground-truth
+rate. \emph{Conditional stability} multiplies stability by neighbour-label
+consistency, penalising the degenerate constant-output solution.
+\emph{Velocity--flow coupling} is the Spearman correlation between embedding
+velocity and dense Farneback optical-flow magnitude, separating drift that
+tracks scene motion from drift that does not. Twelve synthetic controls with
+known answers gate the suite.
+
+\subsection{Data and statistics}
+We use Cholec80 \citep{twinanda2017endonet}: 80 laparoscopic cholecystectomy
+videos with per-frame phase annotations over seven phases and binary presence
+labels for seven instruments. Following the standard protocol we sample at
+1\,fps, yielding 184{,}498 frames. Phase labels are provided at 25\,fps and
+instrument labels at 1\,fps; we align them by taking the phase label at each
+sampled native frame index and assert index agreement rather than assuming it.
+Pilot experiments used CholecSeg8k \citep{hong2020cholecseg8k}.
+
+Frames within a surgery are near-duplicates, so \textbf{all splitting and
+resampling is at the video level}. Our primary analysis is 5-fold
+cross-validation over all 80 videos with a shared fold assignment across
+encoders, so that every comparison is paired; each video is scored exactly once
+by a probe trained on the other four folds. Pairwise differences are assessed
+by a paired video-level bootstrap \citep{efron1994bootstrap} with 10{,}000
+resamples of the per-video difference. Pairing cancels the large between-video
+variation in duration and difficulty; overlapping marginal intervals do not
+imply a non-significant paired difference. For comparability with published
+work we also report the fixed 40/8/32 split. Phase prevalence varies by up to
+$31\times$, so macro-F1 is reported alongside accuracy.
+
+Our panel comprises 6 pairs $\times$ 5 windows $=$ 30 tests, of which 24 are
+significant at $p<0.05$ against $\approx$1.5 expected by chance; the null
+results below are therefore informative rather than merely underpowered.
+
+\begin{table}[t]\centering\small
+\caption{Encoders. VRAM is measured peak allocation during extraction.
+Throughput is I/O-bound in our pipeline and is not model throughput.}
+\label{tab:encoders}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Encoder & Pretraining & Dim & VRAM \\
+\midrule
+DINOv2 ViT-S/14   & LVD-142M, SSL      & 384 & 489\,MB \\
+CLIP ViT-B/16     & WIT-400M, language & 768 & 1011\,MB \\
+EndoViT ViT-B/16  & Endo700k, MAE      & 768 & 856\,MB \\
+BiomedCLIP ViT-B/16 & PMC-15M, language & 768 & 856\,MB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+
+\subsection{Frame-level protocols disagree}
+\label{sec:frame}
+
+\begin{table}[t]\centering\small
+\caption{Frame-level protocols, fixed 40/8/32 split. P1 selects EndoViT;
+P2 selects BiomedCLIP.}
+\label{tab:frame}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{P1 linear} & \multicolumn{2}{c}{P2 $k$-NN} & \\
+Encoder & acc & F1 & acc & F1 & gap \\
+\midrule
+EndoViT    & \bf.704 & \bf.615 & .522 & .377 & .238 \\
+DINOv2     & .677 & .597 & .611 & .463 & .134 \\
+BiomedCLIP & .658 & .578 & \bf.617 & \bf.504 & .075 \\
+CLIP       & .648 & .568 & .572 & .391 & .177 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:frame} shows two standard protocols selecting different winners.
+EndoViT has the best linear separability and the worst geometric clustering: its
+phases are separable by a hyperplane but not by proximity, consistent with it
+having the smallest feature spread of the four (embedding standard deviation
+0.425 versus 2.46 for DINOv2).
+
+The per-phase pattern is identical across all four encoders: the long
+dissection phases score 0.69--0.77 F1 while transitional and rare phases
+collapse to 0.46--0.59. This failure is structural rather than model-specific,
+and concerns exactly the states a single frame cannot disambiguate.
+
+\subsection{Temporal reliability at $w=1$}
+Every encoder over-segments dramatically. Predicted phase-transition rates
+exceed ground truth by $79.7\times$ (EndoViT), $110.5\times$ (DINOv2),
+$122.4\times$ (BiomedCLIP) and $124.3\times$ (CLIP), at frame accuracies of
+0.66--0.72. The best encoder---a surgical foundation model pretrained on this
+data distribution---still announces eighty times too many phase transitions.
+This is a within-encoder measurement against ground truth, two orders of
+magnitude in size, and does not depend on any cross-encoder comparison.
+
+\subsection{The domain advantage converges away}
+\label{sec:converge}
+
+\begin{table}[t]\centering\small
+\caption{Mean accuracy, 5-fold CV over all 80 videos, causal smoothing.
+Ordering is preserved at every window; the \emph{gaps} are what change.}
+\label{tab:acc}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Encoder & $w{=}1$ & 15 & 31 & 61 & 121 \\
+\midrule
+EndoViT    & \bf.756 & \bf.805 & \bf.810 & \bf.795 & \bf.751 \\
+DINOv2     & .697 & .779 & .790 & .784 & .742 \\
+BiomedCLIP & .676 & .760 & .770 & .762 & .723 \\
+CLIP       & .664 & .753 & .764 & .752 & .710 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]\centering\small
+\caption{Paired accuracy differences, causal smoothing, $n=80$ videos.
+Shrinkage is $1-\Delta_{121}/\Delta_{1}$. All EndoViT gaps shrink; no
+general-encoder gap does.
+$^{***}p{<}.001$, $^{**}p{<}.01$, $^{*}p{<}.05$, n.s.\ otherwise.}
+\label{tab:paired}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Pair & $w{=}1$ & $w{=}31$ & $w{=}121$ & shrink \\
+\midrule
+EndoViT$-$DINOv2     & $+.060^{***}$ & $+.019^{*}$   & $+.009$       & \bf85\% \\
+EndoViT$-$BiomedCLIP & $+.080^{***}$ & $+.040^{***}$ & $+.029^{**}$  & 64\% \\
+EndoViT$-$CLIP       & $+.092^{***}$ & $+.046^{***}$ & $+.041^{***}$ & 55\% \\
+DINOv2$-$CLIP        & $+.033^{***}$ & $+.026^{***}$ & $+.032^{***}$ & \bf2\% \\
+DINOv2$-$BiomedCLIP  & $+.021^{**}$  & $+.020^{*}$   & $+.020^{*}$   & 5\% \\
+BiomedCLIP$-$CLIP    & $+.012^{*}$   & $+.006$       & $+.013$       & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:paired} is the paper's central result. EndoViT's advantage over
+DINOv2 crosses from significant to non-significant between $w=31$ ($p=0.017$)
+and $w=61$ ($p=0.19$); at $w=121$ EndoViT wins on 44 of 80 videos, a coin flip.
+Every EndoViT gap shrinks by 55--85\%. No gap between general-purpose encoders
+shrinks at all: DINOv2$-$CLIP is $+0.033$ at $w=1$ and $+0.032$ at $w=121$, both
+$p<0.001$.
+
+This contrast is what makes the effect attributable to pretraining type. If
+smoothing merely compressed all differences toward a ceiling, the
+general-encoder gaps would shrink too. They do not. The interpretation we
+favour is that surgical pretraining principally buys single-frame
+discriminability, and that temporal aggregation recovers much of the same
+information from context---so the two routes to the same signal overlap.
+
+Accuracy peaks near $w\approx31$ under causal smoothing and declines thereafter,
+because a trailing window necessarily lags every transition; macro-F1 peaks
+near $w\approx15$--31 and falls below the unsmoothed baseline by $w=121$ as
+short rare phases are erased. We therefore take $w\approx31$ as the honest
+operating point. Under centered smoothing accuracy rises monotonically---an
+artifact of hindsight that the causal filter exposes.
+
+Across the sweep, jitter falls 38--54$\times$ while accuracy \emph{rises}: the
+phase information was present in the frozen features throughout, and P1 gave no
+indication of how much temporal repair each encoder would require.
+
+\subsection{Supervision beats domain}
+BiomedCLIP and CLIP are statistically indistinguishable at every window
+$w\geq15$ ($p=0.17$--$0.47$, differences $\leq0.013$, splits 33--42 of 80).
+Medical-domain pretraining delivered through language supervision transfers
+essentially nothing to surgical video, whereas medical-domain self-supervised
+pretraining yields a large frame-level lead. Both self-supervised encoders beat
+both language-supervised encoders at every window. A plausible mechanism is
+that PMC-15M comprises static biomedical figures---histology, radiology,
+diagrams---whose visual statistics differ sharply from endoscopic video;
+nominal domain proximity does not imply transfer. Given that 24 of 30
+comparisons in the same panel reach significance, this is a well-powered null.
+
+\subsection{Is drift signal or noise?}
+Spearman correlations between embedding velocity and optical-flow magnitude
+(10 test videos, all $p<0.05$) are 0.499 (EndoViT), 0.471 (DINOv2) and 0.388
+(CLIP). Drift partly tracks scene motion, but roughly half the variance is
+unexplained by pixel motion, indicating a substantial spurious component. The
+ordering matches the stability ranking.
+
+\section{Analysis}
+
+\subsection{Raw drift is variance-gameable}
+\label{sec:variance}
+An early run indicated CLIP as \emph{more} temporally stable than DINOv2 (raw
+inter-frame drift 0.042 versus 0.124). Diagnosis: CLIP's feature spread was
+$3.5\times$ smaller and its embedding standard deviation $2.7\times$ smaller.
+Its drift was low because its features were low-variance, not because they were
+stable. The internal contradiction that flagged this was that CLIP
+simultaneously jittered \emph{more} ($124\times$ versus $110\times$).
+
+Normalising drift by sequence spread removes the artifact. Notably EndoViT has
+the \emph{lowest} raw variance of the four (0.425) yet is genuinely the most
+stable once normalised (drift ratio 0.512 versus 0.665 and 0.800)---low
+variance realised well rather than badly. Raw drift and raw variance each
+mislead in isolation; only the normalised metric distinguishes a bland encoder
+from a well-organised one.
+
+\subsection{A retracted result}
+\label{sec:retraction}
+On the fixed 40/8/32 split (32 test videos, 40 training), causal smoothing
+appeared to \emph{invert} the DINOv2/EndoViT ordering: EndoViT $+0.030$ at
+$w=1$, DINOv2 $+0.021$ at $w=121$. We initially treated this as the paper's
+principal finding.
+
+It did not replicate. Under 5-fold cross-validation (80 test videos, 64
+training) the sign never flips and EndoViT leads at every window. On the
+32-video split, no pairwise comparison in the panel reached significance,
+including EndoViT's frame-level lead ($p=0.076$). Both the evaluation-set size
+and the training-set size differ between the two analyses, so we do not
+attribute the discrepancy to either alone.
+
+The implication extends beyond our own error: sub-two-point margins between
+frozen encoders on a 32-video Cholec80 test split are not resolvable, and such
+rankings are routinely reported in this literature without paired error bars.
+We recommend paired video-level bootstrapping and cross-validation over fixed
+splits whenever a reported margin is small.
+
+\section{Limitations}
+\textbf{Domain overlap.} Endo700k includes Cholec80, so EndoViT observed these
+videos during self-supervised pretraining. This inflates its frame-level lead
+and therefore makes the convergence result conservative. \textbf{Single
+dataset.} Cross-procedure replication, for which AutoLaparo
+\citep{wang2022autolaparo} is the natural target, remains outstanding.
+\textbf{Aggregator strength.} A majority filter is far weaker than MS-TCN
+\citep{farha2019mstcn}; our result is a lower bound, and a learned head would
+plausibly erase more of the domain advantage. \textbf{Panel size.} Four
+encoders suffice for pairwise claims at $n=80$ videos but not for rank
+correlations. \textbf{Efficiency.} Reported throughput is pipeline-level and
+I/O-bound, not model-level.
+
+\section{Conclusion}
+Surgical-domain pretraining confers a large, unambiguous advantage on the
+frame-level probe the field uses to compare frozen backbones---6.0 accuracy
+points for EndoViT over DINOv2 across 80 paired videos. Under temporal
+aggregation, 85\% of that advantage disappears and the remainder is
+indistinguishable from zero, while gaps between general-purpose encoders are
+untouched. Meanwhile every encoder tested over-segments surgical phase by
+80--124$\times$ at frame accuracies that read as respectable. Practitioners
+should evaluate frozen backbones under the aggregation regime they intend to
+deploy, report paired error bars on any margin below a few points, and treat
+frame-level gains from domain pretraining as an upper bound on deployed
+benefit.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+\end{document}
