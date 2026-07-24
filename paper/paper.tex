@@ -21,9 +21,9 @@ much of that advantage survives the temporal aggregation a deployed system
 performs. Benchmarking four encoders spanning the pretraining
 $2\times2$---general/medical $\times$ self-supervised/language-supervised---on
 Cholec80 phase recognition with paired video-level statistics over all 80
-videos, we find that EndoViT leads DINOv2 by 6.0 accuracy points under
-frame-level linear probing ($p<0.001$), but that 85\% of this advantage
-disappears under causal temporal smoothing, leaving a residual gap
+videos, we find that EndoViT leads DINOv2 by 6.0 accuracy points at the frame level
+($w{=}1$; $p<0.001$), but that 85\% of this advantage disappears under causal
+temporal smoothing, leaving a residual gap
 statistically indistinguishable from zero ($+0.009$, $p=0.29$). The effect is
 specific to the domain-pretrained encoder: every EndoViT gap shrinks by
 55--85\%, whereas the DINOv2--CLIP gap is unchanged ($+0.033 \to +0.032$, both
